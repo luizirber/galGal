@@ -1,0 +1,4 @@
+for file in $(ls -1 /mnt/scratch/irberlui/biodata/galGal/outputs/moleculo/LR6000017-DNA_A01-LRAAA-*LongRead*fasta)
+do
+  ./submit_blat_mol.pbs $file
+done

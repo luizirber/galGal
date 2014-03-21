@@ -1,0 +1,28 @@
+#!/bin/bash -login
+
+mkdir -p /mnt/scratch/irberlui/biodata/galGal/workdir/output/
+COVID=$(basename $1)
+
+cat <<EOT1> /mnt/scratch/irberlui/biodata/galGal/workdir/submit.${COVID}
+#!/bin/bash -login
+#PBS -l walltime=00:15:00,nodes=1:ppn=1
+#PBS -l mem=2gb
+#PBS -j oe
+#PBS -o /mnt/scratch/irberlui/biodata/galGal/workdir/output/output.${COVID}
+#PBS -N bam_cov.${COVID}
+#PBS -A ged-intel11
+#PBS -W umask=027
+
+set -exu
+
+/mnt/home/irberlui/Envs/bioinfo/bin/bioinfo bam_coverage $1 /mnt/scratch/irberlui/biodata/galGal/outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam 200 /mnt/scratch/irberlui/biodata/galGal/outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq --mapq=30
+
+
+cat \${PBS_NODEFILE}       # Output Contents of the PBS NODEFILE
+
+env | grep PBS            # Print out values of the current jobs PBS environment variables
+
+qstat -f \${PBS_JOBID}     # Print out final statistics about resource uses before job exits
+EOT1
+
+qsub /mnt/scratch/irberlui/biodata/galGal/workdir/submit.${COVID}

@@ -1,0 +1,38 @@
+#!/bin/bash -login
+
+mkdir -p /mnt/scratch/irberlui/biodata/galGal/workdir/output/
+mkdir -p /mnt/scratch/irberlui/biodata/galGal/workdir/results/
+
+#/mnt/scratch/irberlui/biodata/galGal/outputs/moleculo/LR6000017-DNA_A01-LRAAA-*LongRead*fasta
+
+#/mnt/scratch/irberlui/biodata/galGal/outputs/moleculo/LR6000017-DNA_A01-LRAAA-1_LongRead_500_1499nt.fasta
+#/mnt/scratch/irberlui/biodata/galGal/outputs/moleculo/LR6000017-DNA_A01-LRAAA-1_LongRead.fasta
+
+
+FILENAME=$(basename $1)
+RUN_ID=$(echo $FILENAME|cut -d '-' -f4|cut -d"." -f1)
+
+cat <<EOT1> /mnt/scratch/irberlui/biodata/galGal/workdir/submit.blat.${RUN_ID}
+#!/bin/bash -login
+#PBS -l walltime=20:00:00,nodes=1:ppn=1
+#PBS -l mem=3gb
+#PBS -j oe
+#PBS -o /mnt/scratch/irberlui/biodata/galGal/workdir/output/output.blat.${RUN_ID}
+#PBS -N ${RUN_ID}
+#PBS -A ged-intel11
+#PBS -W umask=027
+
+set -exu
+
+module load BLAT
+
+blat -out=blast8 $1 /mnt/scratch/irberlui/biodata/galGal/inputs/chicken_transcripts/global_merged.fa.clean.nr /mnt/scratch/irberlui/biodata/galGal/workdir/results/transc_${RUN_ID}
+
+cat \${PBS_NODEFILE}       # Output Contents of the PBS NODEFILE
+
+env | grep PBS            # Print out values of the current jobs PBS environment variables
+
+qstat -f \${PBS_JOBID}     # Print out final statistics about resource uses before job exits
+EOT1
+
+qsub /mnt/scratch/irberlui/biodata/galGal/workdir/submit.blat.${RUN_ID}

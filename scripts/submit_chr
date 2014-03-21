@@ -1,0 +1,4 @@
+for chr in $(ls -1 /mnt/scratch/irberlui/biodata/galGal/inputs/galGal4/chr*)
+do
+  ./submit2.pbs $chr
+done

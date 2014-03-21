@@ -1,0 +1,1 @@
+for i in $(seq -w 500 500 15000); do ./submit1.pbs $i; done;
