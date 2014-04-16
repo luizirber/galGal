@@ -1,3 +1,6 @@
 #!/bin/bash -eu
 
-rm ~/biodata/galGal/"$1" /mnt/scratch/irberlui/biodata/galGal/"$1"
+export SRCDIR="/mnt/home/irberlui/biodata/galGal"
+export DESTDIR="/mnt/scratch/tg/irberlui/biodata/galGal"
+
+rm $SRCDIR/"$1" $DESTDIR/"$1"

@@ -9,3 +9,5 @@ export DESTDIR="/mnt/scratch/tg/irberlui/biodata/galGal"
 cd $SRCDIR; find . -type f -path ./misc -prune -o -size +100000 | parallel -j 10 -v mkdir -p $DESTDIR/{//}\;rsync -avP {} $DESTDIR/{}
 
 rsync -av $SRCDIR/ $DESTDIR/ -f"- .git/"
+
+rsync -av $DESTDIR/ $SRCDIR/ -f"- .git/"
