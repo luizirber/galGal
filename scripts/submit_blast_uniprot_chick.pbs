@@ -8,7 +8,7 @@ RUN_ID=uniprot.x.chick
 cat <<EOT1> /mnt/scratch/tg/irberlui/biodata/galGal/workdir/submit.blast.${RUN_ID}
 #!/bin/bash -login
 #PBS -l walltime=20:00:00,nodes=1:ppn=8
-#PBS -l mem=200mb
+#PBS -l mem=400mb
 #PBS -j oe
 #PBS -o /mnt/scratch/tg/irberlui/biodata/galGal/workdir/output/output.blast.${RUN_ID}
 #PBS -N ${RUN_ID}
