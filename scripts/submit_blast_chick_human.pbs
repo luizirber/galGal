@@ -3,7 +3,7 @@
 mkdir -p /mnt/scratch/tg/irberlui/biodata/galGal/workdir/output/
 mkdir -p /mnt/scratch/tg/irberlui/biodata/galGal/workdir/results/
 
-RUN_ID=chick.x.uniprot
+RUN_ID=chick.x.human
 
 cat <<EOT1> /mnt/scratch/tg/irberlui/biodata/galGal/workdir/submit.blast.${RUN_ID}
 #!/bin/bash -login
@@ -20,7 +20,7 @@ module load BLAST
 
 cd \$PBS_O_WORKDIR
 
-blastall -i ../outputs/rna/only_rna.fa.renamed.fasta -d ../outputs/uniprot/uniprot_sprot.fasta -e 1e-3 -p blastx -o ../workdir/results/chick.x.uniprot -a 8 -v 4 -b 4
+blastall -i ../outputs/rna/only_rna.fa.renamed.fasta -d ../outputs/human/human.protein.faa -e 1e-3 -p blastx -o ../workdir/results/chick.x.human -a 8 -v 4 -b 4
 
 cat \${PBS_NODEFILE}       # Output Contents of the PBS NODEFILE
 
