@@ -1,20 +1,23 @@
 #!/bin/bash -login
 
-mkdir -p /mnt/scratch/irberlui/biodata/galGal/workdir/output/
+GALDIR=/mnt/scratch/tg/irberlui/biodata/galGal
+WORKDIR=$GALDIR/workdir
 
-cat <<EOT1> /mnt/scratch/irberlui/biodata/galGal/workdir/submit.${1}
+mkdir -p $WORKDIR/output/
+
+cat <<EOT1> $WORKDIR/submit.${1}
 #!/bin/bash -login
 #PBS -l walltime=01:00:00,nodes=1:ppn=1
 #PBS -l mem=10gb
 #PBS -j oe
-#PBS -o /mnt/scratch/irberlui/biodata/galGal/workdir/output/output.${1}
+#PBS -o $WORKDIR/output/output.${1}
 #PBS -N bam_cov.${1}
 #PBS -A ged-intel11
 #PBS -W umask=027
 
 set -exu
 
-/mnt/home/irberlui/Envs/bioinfo/bin/bioinfo bam_coverage /mnt/scratch/irberlui/biodata/galGal/inputs/galGal4/galGal4.fa.masked.gz /mnt/scratch/irberlui/biodata/galGal/outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam ${1} /mnt/scratch/irberlui/biodata/galGal/outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq --mapq=30
+/mnt/home/irberlui/Envs/bioinfo/bin/bioinfo bam_coverage $GALDIR/inputs/galGal4/galGal4.fa.masked.gz $GALDIR/outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam ${1} $GALDIR/outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq --mapq=30
 
 
 cat \${PBS_NODEFILE}       # Output Contents of the PBS NODEFILE
@@ -24,4 +27,4 @@ env | grep PBS            # Print out values of the current jobs PBS environment
 qstat -f \${PBS_JOBID}     # Print out final statistics about resource uses before job exits
 EOT1
 
-qsub /mnt/scratch/irberlui/biodata/galGal/workdir/submit.${1}
+qsub $WORKDIR/submit.${1}
