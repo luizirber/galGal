@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 
+import os
 import sys
 
 import numpy as np
@@ -32,23 +33,39 @@ hist = np.histogram(query_lengths, range(500, 15501, 500))
 df['histogram'] = pd.Series(hist[0], hist[1][:-1])
 
 # grep "ref bases covered" bam_cov.*
-total_ref_bases_covered = [
-  861340070, 856041875, 851206517, 846848062, 842270459, 837297964, 831939901,
-  826275521, 820383036, 813324316, 805880858, 797349471, 786997143, 773834101,
-  752631701, 700732257, 622487206, 519975737, 397122647, 271267193, 161094016,
-  76707337, 25066690, 4830387, 856471, 461040, 421499, 328581, 260590, 191072
-]
+#total_ref_bases_covered = [
+#  861340070, 856041875, 851206517, 846848062, 842270459, 837297964, 831939901,
+#  826275521, 820383036, 813324316, 805880858, 797349471, 786997143, 773834101,
+#  752631701, 700732257, 622487206, 519975737, 397122647, 271267193, 161094016,
+#  76707337, 25066690, 4830387, 856471, 461040, 421499, 328581, 260590, 191072
+#]
 
-df['total ref bases covered'] = total_ref_bases_covered
+total_ref_bases_covered = {}
+for i in range(500, 15001, 500):
+    with open(os.path.join(sys.argv[2], 'output.%05d' % i), 'r') as f:
+        total_ref_bases_covered[i] = None
+        for line in f:
+            if 'covered' in line:
+                total_ref_bases_covered[i] = int(line.strip().split(':')[-1])
+
+df['total ref bases covered'] = pd.Series(total_ref_bases_covered, index=total_ref_bases_covered.keys())
 
 # grep "ref bases covered" output_0.9/output.*|cut -d ":" -f3
-total_ref_bases_covered_90 = [
- 822849049, 813355067, 804452160, 795848482, 786925399, 777548083, 767605790,
- 757371322, 746935144, 735442127, 723596727, 710879582, 696277887, 679037408,
- 651879672, 587672522, 501621674, 401902417, 295127743, 194892528, 112797988,
- 52316978, 16741243, 3133169, 510501, 270244, 230703, 161312, 125694, 85222
-]
+#total_ref_bases_covered_90 = [
+# 822849049, 813355067, 804452160, 795848482, 786925399, 777548083, 767605790,
+# 757371322, 746935144, 735442127, 723596727, 710879582, 696277887, 679037408,
+# 651879672, 587672522, 501621674, 401902417, 295127743, 194892528, 112797988,
+# 52316978, 16741243, 3133169, 510501, 270244, 230703, 161312, 125694, 85222
+#]
 
-df['total ref bases covered, alignment length > 90% read'] = total_ref_bases_covered_90
+total_ref_bases_covered_90 = {}
+for i in range(500, 15001, 500):
+    with open(os.path.join(sys.argv[3], 'output.%05d' % i), 'r') as f:
+        total_ref_bases_covered_90[i] = None
+        for line in f:
+            if 'covered' in line:
+                total_ref_bases_covered_90[i] = int(line.strip().split(':')[-1])
 
-df.to_csv('pd_df.csv')
+df['total ref bases covered, alignment length > 90% read'] = pd.Series(total_ref_bases_covered_90, index=total_ref_bases_covered_90.keys())
+
+df.to_csv(sys.argv[4])
