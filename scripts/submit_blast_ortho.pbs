@@ -1,0 +1,31 @@
+#!/bin/bash -login
+
+mkdir -p /mnt/scratch/tg/irberlui/biodata/galGal/workdir/output/
+mkdir -p /mnt/scratch/tg/irberlui/biodata/galGal/workdir/results/
+
+RUN_ID=blast.ortho
+
+cat <<EOT1> /mnt/scratch/tg/irberlui/biodata/galGal/workdir/submit.${RUN_ID}
+#!/bin/bash -login
+#PBS -l walltime=20:00:00,nodes=1:ppn=8
+#PBS -l mem=2gb
+#PBS -j oe
+#PBS -o /mnt/scratch/tg/irberlui/biodata/galGal/workdir/output/output.${RUN_ID}
+#PBS -N ${RUN_ID}
+#PBS -A ged-intel11
+#PBS -W umask=027
+
+set -exu
+
+module load BLAST+
+
+cd /mnt/scratch/tg/irberlui/biodata/galGal/outputs/rna && blastn -query ../chicken_transcripts/global_merged.fa.clean.nr.renamed.fasta -out /mnt/scratch/tg/irberlui/biodata/galGal/workdir/results/Chick_RNA_BLAST.txt -db ../galGal4/galGal4_db -outfmt 6 -evalue 1e-3 -num_threads 8
+
+cat \${PBS_NODEFILE}       # Output Contents of the PBS NODEFILE
+
+env | grep PBS             # Print out values of the current jobs PBS environment variables
+
+qstat -f \${PBS_JOBID}     # Print out final statistics about resource uses before job exits
+EOT1
+
+qsub /mnt/scratch/tg/irberlui/biodata/galGal/workdir/submit.${RUN_ID}
