@@ -8,6 +8,19 @@ moleculo_galGal4_masked: outputs/moleculo/galGal4.masked.LR6000017-DNA_A01-LRAAA
 
 moleculo_galGal4: outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 
+inputs/galGal4/galGal4.%.gz:
+	wget -SNc ftp://hgdownload.cse.ucsc.edu/goldenPath/galGal4/bigZips/$(@F) -P inputs/galGal4/
+
+inputs/uniprot/uniprot_sprot.fasta.gz:
+	wget -SNc ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/$(@F) -P inputs/uniprot/
+
+#######################################################################
+
+outputs/uniprot/uniprot_sprot.fasta: inputs/uniprot/uniprot_sprot.fasta.gz
+	mkdir -p outputs/uniprot
+	cp -a {inputs,outputs}/uniprot/$(<F)
+	gunzip -f outputs/uniprot/$(<F)
+
 outputs/moleculo/%-AllReads.sorted.bam: \
   outputs/moleculo/%-1_LongRead_500_1499nt.fastq.sorted.bam \
   outputs/moleculo/%-1_LongRead.fastq.sorted.bam \
@@ -22,9 +35,6 @@ outputs/moleculo/%-AllReads.sorted.bam: \
 	module try-load samtools
 	samtools merge $@ $^
 
-inputs/galGal4/galGal4.%.gz:
-	wget -SNc ftp://hgdownload.cse.ucsc.edu/goldenPath/galGal4/bigZips/$(@F) -P inputs/galGal4/
-
 outputs/galGal4/galGal4.%.sa: outputs/galGal4/galGal4.%
 	module try-load bwa
 	bwa index $<
@@ -35,8 +45,8 @@ outputs/galGal4/galGal4.%.fai: outputs/galGal4/galGal4.%
 
 outputs/galGal4/galGal4.%: inputs/galGal4/galGal4.%.gz
 	mkdir -p outputs/galGal4
-	cp -a {inputs,outputs}/galGal4/$(<F)
-	gunzip -f outputs/galGal4/$(<F)
+	cp {inputs,outputs}/galGal4/$(<F)
+	gunzip -fN outputs/galGal4/$(<F)
 
 outputs/moleculo/%.fastq: inputs/moleculo/%.fastq.gz
 	mkdir -p outputs/moleculo
@@ -45,7 +55,7 @@ outputs/moleculo/%.fastq: inputs/moleculo/%.fastq.gz
 
 outputs/moleculo/%.fastq.sorted.bam: outputs/moleculo/%.fastq.bam
 	module try-load samtools
-	samtools sort -f $< $@
+	samtools sort $< $(basename $@ .bam)
 	samtools index $@
 
 outputs/moleculo/galGal4.masked.%.fastq.bam: outputs/moleculo/%.fastq outputs/galGal4/galGal4.fa.masked.sa outputs/galGal4/galGal4.fa.masked.fai
@@ -63,4 +73,7 @@ outputs/moleculo/galGal4.%.fastq.bam: outputs/moleculo/%.fastq outputs/galGal4/g
 clean:
 	- rm outputs/moleculo/*.sam.galGal4
 	- rm outputs/moleculo/*.sam.galGal4.masked
+	- rm outputs/moleculo/*.fastq.bam
 	# -rm outputs/galGal4/*.{amb,pac,ann}
+
+.PRECIOUS: %.sorted.bam
