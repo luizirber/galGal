@@ -8,12 +8,18 @@ moleculo_galGal4_masked: outputs/moleculo/galGal4.masked.LR6000017-DNA_A01-LRAAA
 
 moleculo_galGal4: outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 
+#######################################################################
+# Inputs
+#######################################################################
+
 inputs/galGal4/galGal4.%.gz:
 	wget -SNc ftp://hgdownload.cse.ucsc.edu/goldenPath/galGal4/bigZips/$(@F) -P inputs/galGal4/
 
 inputs/uniprot/uniprot_sprot.fasta.gz:
 	wget -SNc ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/$(@F) -P inputs/uniprot/
 
+#######################################################################
+# Outputs
 #######################################################################
 
 outputs/uniprot/uniprot_sprot.fasta: inputs/uniprot/uniprot_sprot.fasta.gz
@@ -35,11 +41,11 @@ outputs/moleculo/%-AllReads.sorted.bam: \
 	module try-load samtools
 	samtools merge $@ $^
 
-outputs/galGal4/galGal4.%.sa: outputs/galGal4/galGal4.%
+outputs/galGal%.sa: outputs/galGal%
 	module try-load bwa
 	bwa index $<
 
-outputs/galGal4/galGal4.%.fai: outputs/galGal4/galGal4.%
+outputs/galGal%.fai: outputs/galGal%
 	module try-load samtools
 	samtools faidx $<
 
