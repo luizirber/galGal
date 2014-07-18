@@ -1,0 +1,6 @@
+module load BLAST/2.2.25
+module load bwa/0.7.7.r441
+module load SAMTools/0.1.19
+module use /opt/software/ged-software/modulefiles/
+module load anaconda
+module load parallel
