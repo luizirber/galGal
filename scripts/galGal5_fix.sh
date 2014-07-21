@@ -8,7 +8,7 @@ do
     then
       echo ">"$(basename $f| cut -d "_" -f2)"|"${line:1:200}
     else
-      echo ${line^^}
+      echo ${line}
     fi
   done < $f
 done

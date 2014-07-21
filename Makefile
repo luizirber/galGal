@@ -2,15 +2,15 @@ SHELL=/bin/bash
 
 .PHONY: clean all
 
-all: moleculo_galGal4 moleculo_galGal4_masked moleculo_galGal3 moleculo_galGal5 moleculo_upper_galGal4
+all: moleculo_galGal4 moleculo_galGal3 moleculo_galGal5
+
+#######################################################################
+# High-level targets
+#######################################################################
 
 moleculo_galGal3: outputs/moleculo/galGal3.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 
-moleculo_galGal4_masked: outputs/moleculo/galGal4.masked.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
-
 moleculo_galGal4: outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
-
-moleculo_upper_galGal4: outputs/moleculo/galGal4.upper.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 
 moleculo_galGal5: outputs/moleculo/galGal5.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 
@@ -55,10 +55,6 @@ outputs/galGal%.sa: outputs/galGal%
 
 outputs/galGal%.fai: outputs/galGal%
 	samtools faidx $<
-
-outputs/galGal4/galGal4.fa.upper: inputs/galGal4/galGal4.fa.gz
-	mkdir -p outputs/galGal4
-	gunzip -c $< | tr '[:lower:]' '[:upper:]' > $@
 
 outputs/galGal4/galGal4.%: inputs/galGal4/galGal4.%.gz
 	mkdir -p outputs/galGal4
@@ -116,14 +112,6 @@ outputs/moleculo/%.fastq.sorted.bam: outputs/moleculo/%.fastq.bam
 	samtools sort $< $(basename $@ .bam)
 	samtools index $@
 
-outputs/moleculo/galGal4.masked.%.fastq.bam: outputs/moleculo/%.fastq outputs/galGal4/galGal4.fa.masked.sa outputs/galGal4/galGal4.fa.masked.fai
-	bwa mem outputs/galGal4/galGal4.fa.masked $< > $<.sam.galGal4.masked
-	samtools import outputs/galGal4/galGal4.fa.masked.fai $<.sam.galGal4.masked $@
-
-outputs/moleculo/galGal4.upper.%.fastq.bam: outputs/moleculo/%.fastq outputs/galGal4/galGal4.fa.upper.sa outputs/galGal4/galGal4.fa.upper.fai
-	bwa mem outputs/galGal4/galGal4.fa.upper $< > $<.sam.galGal4.upper
-	samtools import outputs/galGal4/galGal4.fa.upper.fai $<.sam.galGal4.upper $@
-
 outputs/moleculo/galGal4.%.fastq.bam: outputs/moleculo/%.fastq outputs/galGal4/galGal4.fa.sa outputs/galGal4/galGal4.fa.fai
 	bwa mem outputs/galGal4/galGal4.fa $< > $<.sam.galGal4
 	samtools import outputs/galGal4/galGal4.fa.fai $<.sam.galGal4 $@
@@ -144,10 +132,7 @@ outputs/uniprot/uniprot.namedb: outputs/uniprot/uniprot_sprot.fasta
 	cd outputs/uniprot && python -m screed.fadbm uniprot_sprot.fasta
 
 clean:
-	- rm outputs/moleculo/*.sam.galGal3
-	- rm outputs/moleculo/*.sam.galGal4
-	- rm outputs/moleculo/*.sam.galGal4.masked
-	- rm outputs/moleculo/*.sam.galGal4.upper
+	- rm outputs/moleculo/*.sam.galGal*
 	- rm outputs/moleculo/*.fastq.bam
 	# -rm outputs/galGal4/*.{amb,pac,ann}
 

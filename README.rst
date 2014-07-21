@@ -7,52 +7,52 @@ Analysis scripts for galGal
 Repository organization
 =======================
 
- - Makefile
-    Driver script
+- Makefile
+   Driver script
 
- - inputs/
+- inputs/
 
-   * chicken_transcripts
+  * chicken_transcripts
 
-     RNASeq prepared by @likit
+    RNASeq prepared by @likit
 
-   * galGal3
+  * galGal3
 
-     Gallus gallus reference genome, version 3. Publicly available at
-     http://hgdownload.soe.ucsc.edu/goldenPath/galGal3/
+    Gallus gallus reference genome, version 3. Publicly available at
+    http://hgdownload.soe.ucsc.edu/goldenPath/galGal3/
 
-   * galGal4
+  * galGal4
 
-     Gallus gallus reference genome, version 4. Publicly available at
-     http://hgdownload.soe.ucsc.edu/goldenPath/galGal4/
+    Gallus gallus reference genome, version 4. Publicly available at
+    http://hgdownload.soe.ucsc.edu/goldenPath/galGal4/
 
-   * galGal5
+  * galGal5
 
-     Gallus gallus reference genome, draft release of version 5. Not publicly available.
+    Gallus gallus reference genome, draft release of version 5. Not publicly available.
 
-   * human
+  * human
 
-   * moleculo
+  * moleculo
 
-   * uniprot
+  * uniprot
 
- - outputs/
+- outputs/
 
-   Output files created by the Makefile or auxiliary scripts.
+  Output files created by the Makefile or auxiliary scripts.
 
-   Guideline: No output file should be generated based on files outside of inputs/ or workdirs/
+  Guideline: No output file should be generated based on files outside of inputs/ or workdirs/
 
- - scripts/
+- scripts/
 
-   Auxiliary scripts.
+  Auxiliary scripts.
 
- - notebooks/
+- notebooks/
 
-   IPython notebooks containing the analysis.
+  IPython notebooks containing the analysis.
 
- - workdirs/
+- workdirs/
 
-   Job submission system outputs and results.
+  Job submission system outputs and results.
 
 Dependencies
 ============
@@ -60,7 +60,7 @@ Dependencies
 MSU HPCC
 --------
 
-  On MSU HPCC you can source hpcc.modules for all the dependencies.
+On MSU HPCC you can source hpcc.modules for all the dependencies.
 
 License
 =======
