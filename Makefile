@@ -103,10 +103,29 @@ inputs/galGal5/Chicken_ChrZ_PBJelly_14.1.15_QUIVER.fasta
 	mkdir -p outputs/galGal5
 	scripts/galGal5_fix.sh "$^" > $@
 
+outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq: outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq_screed
+	python -m screed.ToFastq $< $@
+
 outputs/moleculo/%.fastq: inputs/moleculo/%.fastq.gz
 	mkdir -p outputs/moleculo
 	cp -a $< $@.gz
 	gunzip -f $@.gz
+
+outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq_screed: \
+  outputs/moleculo/LR6000017-DNA_A01-LRAAA-1_LongRead_500_1499nt.fastq_screed \
+  outputs/moleculo/LR6000017-DNA_A01-LRAAA-1_LongRead.fastq_screed \
+  outputs/moleculo/LR6000017-DNA_A01-LRAAA-2_LongRead_500_1499nt.fastq_screed \
+  outputs/moleculo/LR6000017-DNA_A01-LRAAA-2_LongRead.fastq_screed \
+  outputs/moleculo/LR6000017-DNA_A01-LRAAA-3_LongRead_500_1499nt.fastq_screed \
+  outputs/moleculo/LR6000017-DNA_A01-LRAAA-3_LongRead.fastq_screed \
+  outputs/moleculo/LR6000017-DNA_A01-LRAAA-4_LongRead_500_1499nt.fastq_screed \
+  outputs/moleculo/LR6000017-DNA_A01-LRAAA-4_LongRead.fastq_screed \
+  outputs/moleculo/LR6000017-DNA_A01-LRAAA-5_LongRead_500_1499nt.fastq_screed \
+  outputs/moleculo/LR6000017-DNA_A01-LRAAA-5_LongRead.fastq_screed
+	python scripts/merge_repeated.py $@ $^
+
+outputs/moleculo/%.fastq_screed: outputs/moleculo/%.fastq
+	python -m screed.fqdbm $<
 
 outputs/moleculo/%.fastq.sorted.bam: outputs/moleculo/%.fastq.bam
 	samtools sort $< $(basename $@ .bam)
@@ -130,6 +149,8 @@ outputs/uniprot/uniprot.namedb: outputs/uniprot/uniprot_sprot.fasta
 	cd outputs/uniprot && formatdb -i uniprot_sprot.fasta -o T -p T
 	cd outputs/uniprot && python ../../scripts/make-namedb.py uniprot_sprot.fasta uniprot.namedb
 	cd outputs/uniprot && python -m screed.fadbm uniprot_sprot.fasta
+
+#######################################################################
 
 clean:
 	- rm outputs/moleculo/*.sam.galGal*
