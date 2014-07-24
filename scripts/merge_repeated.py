@@ -1,9 +1,11 @@
-from glob import glob
+#! /usr/bin/env python
+
 from itertools import chain
+import os
+import sys
 
 import screed
 from screed import fastq
-from tqdm import tqdm
 
 def iter_filename(original, filename=None):
     for name in original:
@@ -14,21 +16,23 @@ def iter_filename(original, filename=None):
         yield record
 
 
-def read_fastq_repeated_names():
+def read_fastq_repeated_names(output, inputs):
     iters = []
-    for file in glob('LR6000017-DNA_A01-LRAAA-*LongRead*.fastq_screed'):
+    for file in inputs:
         db = screed.ScreedDB(file)
 
-        filename = file.replace('LR6000017-DNA_A01-LRAAA-', "")
+        filename = os.path.basename(file).replace('LR6000017-DNA_A01-LRAAA-', "")
         if "500" in filename:
             filename = filename[0] + "_500"
         else:
             filename = filename[0]
 
-        iters.append(tqdm(iter_filename(db, filename)))
-        #iterfunc = openscreed.open(filename)
-        #iters.append(iter_filename(iterfunc, file))
+        iters.append(iter_filename(db, filename))
 
-    screed.create_db('LR6000017-DNA_A01-LRAAA-AllReads.fastq_screed', fastq.FieldTypes, chain(*iters))
+    screed.create_db(output, fastq.FieldTypes, chain(*iters))
 
-read_fastq_repeated_names()
+
+if __name__ == '__main__':
+    output = sys.argv[1]
+    inputs = sys.argv[2:]
+    read_fastq_repeated_names(output, inputs)

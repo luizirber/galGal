@@ -1,0 +1,8 @@
+#!/bin/bash -login
+#PBS -A ged-intel11
+#PBS -W umask=027
+
+cd $PBS_O_WORKDIR
+
+source hpcc.modules
+set -exu
