@@ -193,10 +193,13 @@ outputs/coverage/%.pd_df.csv: outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.
   workdirs/%_90/output/output.12500 workdirs/%_90/output/output.13000 \
   workdirs/%_90/output/output.13500 workdirs/%_90/output/output.14000 \
   workdirs/%_90/output/output.14500 workdirs/%_90/output/output.15000
-	echo python scripts/count_reads_pd.py $< workdirs/$(*F)/output workdirs/$(*F)_90/output $@
+	mkdir -p $(@D)
+	python scripts/count_reads_pd.py $< workdirs/$(*F)/output workdirs/$(*F)_90/output $@
 
-workdirs/%.pbs: $(@:.pbs=)
-	echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | qsub -l ${COVERAGE_RES} -N cov.${subst output.,,$(@F)} -o $@.out -e $@.err
+workdirs/%.pbs: workdirs/%.pbs.out
+	$(eval JOBID := $(shell echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | qsub -l ${COVERAGE_RES} -N cov.${subst output.,,$(@F)} -o $@.out -e $@.err | cut -d"." -f1))
+	-while [ -n "$$(qstat -a |grep $(JOBID))" ]; do sleep 60; done
+	@grep "galGal PBS job finished: SUCCESS" $@.out
 
 #workdirs/%_90/output/output.00500: $(subst REF,galGal4,outputs/REF/REF.fa) outputs/moleculo/%.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 #workdirs/galGal4_90/output/output.00500: outputs/galGal4/galGal4.fa outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam

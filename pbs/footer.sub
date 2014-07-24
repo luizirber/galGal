@@ -3,3 +3,5 @@ cat ${PBS_NODEFILE}       # Output Contents of the PBS NODEFILE
 env | grep PBS            # Print out values of the current jobs PBS environment variables
 
 qstat -f ${PBS_JOBID}     # Print out final statistics about resource uses before job exits
+
+echo "galGal PBS job finished: SUCCESS"
