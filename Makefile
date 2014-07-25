@@ -235,5 +235,10 @@ clean:
 	- rm outputs/moleculo/*.fastq.bam
 	# -rm outputs/galGal4/*.{amb,pac,ann}
 
+dependencies.png:
+	make -Bnd | make2graph > output.dot
+	dot -Tpng output.dot > dependencies.png
+	-rm output.dot
+
 #.PRECIOUS: %.sorted.bam
 .SECONDARY:
