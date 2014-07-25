@@ -199,8 +199,8 @@ outputs/coverage/%.pd_df.csv: outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.
 
 
 workdirs/%.pbs:
-	$(eval JOBID := $(shell echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | qsub -l ${COVERAGE_RES} -N cov.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1))
-	-while [ -n "$$(qstat -a |grep $(JOBID))" ]; do sleep 60; done
+	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | qsub -l ${COVERAGE_RES} -N cov.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
+	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 60; done
 	@grep "galGal PBS job finished: SUCCESS" $@
 
 #workdirs/%_90/output/output.00500: $(subst REF,galGal4,outputs/REF/REF.fa) outputs/moleculo/%.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
