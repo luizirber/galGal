@@ -15,6 +15,16 @@ moleculo_galGal4: outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sort
 moleculo_galGal5: outputs/moleculo/galGal5.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 
 #######################################################################
+# PBS stuff
+#######################################################################
+
+workdirs/%.pbs:
+	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
+	  qsub -l ${COVERAGE_RES} -N cov.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
+	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 60; done
+	@grep "galGal PBS job finished: SUCCESS" $@
+
+#######################################################################
 # Inputs
 #######################################################################
 
@@ -27,7 +37,7 @@ inputs/galGal3/galGal3.fa:
 inputs/uniprot/uniprot_sprot.fasta.gz:
 	wget -SNc ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/$(@F) -P inputs/uniprot/
 
-inputs/msu/Chicker.tar.gz:
+inputs/msu/Chicken.tar.gz:
 	wget -SNc https://dl.dropboxusercontent.com/u/1455804/Chicken.tar.gz -P inputs/msu/
 
 #######################################################################
@@ -72,54 +82,14 @@ outputs/galGal3/galGal3.fa: inputs/galGal3/galGal3.2bit
 	outputs/galGal3/twoBitToFa $< $@
 	-rm outputs/galGal3/twoBitToFa
 
-outputs/galGal5/galGal5.fa: inputs/galGal5/Chicken_Chr1_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr2_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr3_PBJelly_14.1.15.QUIVER.fasta \
-inputs/galGal5/Chicken_Chr4_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr5_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr6_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr7_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr8_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr9_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr10_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr11_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr12_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr13_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr14_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr15_PBjelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr16_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr17_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr18_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr19_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr20_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr21_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr22_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr23_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr24_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr25_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr26_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr27_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr28_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_Chr32_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_ChrW_PBJelly_14.1.15_QUIVER.fasta \
-inputs/galGal5/Chicken_ChrZ_PBJelly_14.1.15_QUIVER.fasta
+outputs/galGal5/galGal5.fa: $(GALGAL5_SOURCES)
 	mkdir -p outputs/galGal5
 	scripts/galGal5_fix.sh "$^" > $@
 
 #outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq: outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq_screed
 #	python -m screed.dump_to_fastq $< $@
 
-outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq: \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-1_LongRead_500_1499nt.fastq \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-1_LongRead.fastq \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-2_LongRead_500_1499nt.fastq \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-2_LongRead.fastq \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-3_LongRead_500_1499nt.fastq \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-3_LongRead.fastq \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-4_LongRead_500_1499nt.fastq \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-4_LongRead.fastq \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-5_LongRead_500_1499nt.fastq \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-5_LongRead.fastq
+outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq: $(MOLECULO_READS)
 	cat $^ > $@
 
 outputs/moleculo/%.fastq: inputs/moleculo/%.fastq.gz
@@ -127,17 +97,7 @@ outputs/moleculo/%.fastq: inputs/moleculo/%.fastq.gz
 	cp -a $< $@.gz
 	gunzip -f $@.gz
 
-outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq_screed: \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-1_LongRead_500_1499nt.fastq_screed \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-1_LongRead.fastq_screed \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-2_LongRead_500_1499nt.fastq_screed \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-2_LongRead.fastq_screed \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-3_LongRead_500_1499nt.fastq_screed \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-3_LongRead.fastq_screed \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-4_LongRead_500_1499nt.fastq_screed \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-4_LongRead.fastq_screed \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-5_LongRead_500_1499nt.fastq_screed \
-  outputs/moleculo/LR6000017-DNA_A01-LRAAA-5_LongRead.fastq_screed
+outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq_screed: $(addsuffix _screed, $(MOLECULO_READS))
 	python scripts/merge_repeated.py $@ $^
 
 outputs/moleculo/%.fastq_screed: outputs/moleculo/%.fastq
@@ -158,6 +118,8 @@ outputs/moleculo/galGal3.%.fastq.bam: outputs/moleculo/%.fastq outputs/galGal3/g
 outputs/moleculo/galGal5.%.fastq.bam: outputs/moleculo/%.fastq outputs/galGal5/galGal5.fa.sa outputs/galGal5/galGal5.fa.fai
 	bwa mem outputs/galGal5/galGal5.fa $< > $<.sam.galGal5
 	samtools import outputs/galGal5/galGal5.fa.fai $<.sam.galGal5 $@
+
+#######################################################################
 
 outputs/coverage/%.pd_df.csv: outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq \
   outputs/galGal4/galGal4.fa outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam \
@@ -197,15 +159,6 @@ outputs/coverage/%.pd_df.csv: outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.
 	mkdir -p $(@D)
 	python scripts/count_reads_pd.py $< workdirs/$(*F)/output workdirs/$(*F)_90/output $@
 
-
-workdirs/%.pbs:
-	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | qsub -l ${COVERAGE_RES} -N cov.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
-	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 60; done
-	@grep "galGal PBS job finished: SUCCESS" $@
-
-#workdirs/%_90/output/output.00500: $(subst REF,galGal4,outputs/REF/REF.fa) outputs/moleculo/%.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
-#workdirs/galGal4_90/output/output.00500: outputs/galGal4/galGal4.fa outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
-
 workdirs/galGal4_90/output/output.%: outputs/galGal4/galGal4.fa outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 	mkdir -p ${@D}
 	bioinfo bam_coverage $^ ${subst output.,,$(@F)} --mapq=30 --minlen=0.9 1>$@
@@ -214,7 +167,6 @@ workdirs/galGal5_90/output/output.%: outputs/galGal5/galGal5.fa outputs/moleculo
 	mkdir -p ${@D}
 	bioinfo bam_coverage $^ ${subst output.,,$(@F)} --mapq=30 --minlen=0.9 1>$@
 
-#workdirs/galGal4/output/output.00500: inputs/galGal4/galGal4.fa.gz outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq
 workdirs/galGal4/output/output.%: outputs/galGal4/galGal4.fa outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 	mkdir -p ${@D}
 	bioinfo bam_coverage $^ ${subst output.,,$(@F)} --mapq=30 1>$@
@@ -222,6 +174,8 @@ workdirs/galGal4/output/output.%: outputs/galGal4/galGal4.fa outputs/moleculo/ga
 workdirs/galGal5/output/output.%: outputs/galGal5/galGal5.fa outputs/moleculo/galGal5.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 	mkdir -p ${@D}
 	bioinfo bam_coverage $^ ${subst output.,,$(@F)} --mapq=30 1>$@
+
+#######################################################################
 
 outputs/uniprot/uniprot.namedb: outputs/uniprot/uniprot_sprot.fasta
 	cd outputs/uniprot && formatdb -i uniprot_sprot.fasta -o T -p T
