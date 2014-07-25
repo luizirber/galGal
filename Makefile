@@ -161,54 +161,65 @@ outputs/moleculo/galGal5.%.fastq.bam: outputs/moleculo/%.fastq outputs/galGal5/g
 
 outputs/coverage/%.pd_df.csv: outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq \
   outputs/galGal4/galGal4.fa outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam \
-  workdirs/%/output/output.00500 workdirs/%/output/output.01000 \
-  workdirs/%/output/output.01500 workdirs/%/output/output.02000 \
-  workdirs/%/output/output.02500 workdirs/%/output/output.03000 \
-  workdirs/%/output/output.03500 workdirs/%/output/output.03000 \
-  workdirs/%/output/output.03500 workdirs/%/output/output.04000 \
-  workdirs/%/output/output.04500 workdirs/%/output/output.05000 \
-  workdirs/%/output/output.05500 workdirs/%/output/output.06000 \
-  workdirs/%/output/output.06500 workdirs/%/output/output.07000 \
-  workdirs/%/output/output.07500 workdirs/%/output/output.08000 \
-  workdirs/%/output/output.08500 workdirs/%/output/output.09000 \
-  workdirs/%/output/output.09500 workdirs/%/output/output.10000 \
-  workdirs/%/output/output.10500 workdirs/%/output/output.11000 \
-  workdirs/%/output/output.11500 workdirs/%/output/output.12000 \
-  workdirs/%/output/output.12500 workdirs/%/output/output.13000 \
-  workdirs/%/output/output.13500 workdirs/%/output/output.14000 \
-  workdirs/%/output/output.14500 workdirs/%/output/output.15000 \
-  workdirs/%_90/output/output.00500 workdirs/%_90/output/output.01000 \
-  workdirs/%_90/output/output.01500 workdirs/%_90/output/output.02000 \
-  workdirs/%_90/output/output.02500 workdirs/%_90/output/output.03000 \
-  workdirs/%_90/output/output.03500 workdirs/%_90/output/output.03000 \
-  workdirs/%_90/output/output.03500 workdirs/%_90/output/output.04000 \
-  workdirs/%_90/output/output.04500 workdirs/%_90/output/output.05000 \
-  workdirs/%_90/output/output.05500 workdirs/%_90/output/output.06000 \
-  workdirs/%_90/output/output.06500 workdirs/%_90/output/output.07000 \
-  workdirs/%_90/output/output.07500 workdirs/%_90/output/output.08000 \
-  workdirs/%_90/output/output.08500 workdirs/%_90/output/output.09000 \
-  workdirs/%_90/output/output.09500 workdirs/%_90/output/output.10000 \
-  workdirs/%_90/output/output.10500 workdirs/%_90/output/output.11000 \
-  workdirs/%_90/output/output.11500 workdirs/%_90/output/output.12000 \
-  workdirs/%_90/output/output.12500 workdirs/%_90/output/output.13000 \
-  workdirs/%_90/output/output.13500 workdirs/%_90/output/output.14000 \
-  workdirs/%_90/output/output.14500 workdirs/%_90/output/output.15000
+  outputs/galGal5/galGal5.fa outputs/moleculo/galGal5.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam \
+  workdirs/%/output/output.00500.pbs workdirs/%/output/output.01000.pbs \
+  workdirs/%/output/output.01500.pbs workdirs/%/output/output.02000.pbs \
+  workdirs/%/output/output.02500.pbs workdirs/%/output/output.03000.pbs \
+  workdirs/%/output/output.03500.pbs workdirs/%/output/output.03000.pbs \
+  workdirs/%/output/output.03500.pbs workdirs/%/output/output.04000.pbs \
+  workdirs/%/output/output.04500.pbs workdirs/%/output/output.05000.pbs \
+  workdirs/%/output/output.05500.pbs workdirs/%/output/output.06000.pbs \
+  workdirs/%/output/output.06500.pbs workdirs/%/output/output.07000.pbs \
+  workdirs/%/output/output.07500.pbs workdirs/%/output/output.08000.pbs \
+  workdirs/%/output/output.08500.pbs workdirs/%/output/output.09000.pbs \
+  workdirs/%/output/output.09500.pbs workdirs/%/output/output.10000.pbs \
+  workdirs/%/output/output.10500.pbs workdirs/%/output/output.11000.pbs \
+  workdirs/%/output/output.11500.pbs workdirs/%/output/output.12000.pbs \
+  workdirs/%/output/output.12500.pbs workdirs/%/output/output.13000.pbs \
+  workdirs/%/output/output.13500.pbs workdirs/%/output/output.14000.pbs \
+  workdirs/%/output/output.14500.pbs workdirs/%/output/output.15000.pbs \
+  workdirs/%_90/output/output.00500.pbs workdirs/%_90/output/output.01000.pbs \
+  workdirs/%_90/output/output.01500.pbs workdirs/%_90/output/output.02000.pbs \
+  workdirs/%_90/output/output.02500.pbs workdirs/%_90/output/output.03000.pbs \
+  workdirs/%_90/output/output.03500.pbs workdirs/%_90/output/output.03000.pbs \
+  workdirs/%_90/output/output.03500.pbs workdirs/%_90/output/output.04000.pbs \
+  workdirs/%_90/output/output.04500.pbs workdirs/%_90/output/output.05000.pbs \
+  workdirs/%_90/output/output.05500.pbs workdirs/%_90/output/output.06000.pbs \
+  workdirs/%_90/output/output.06500.pbs workdirs/%_90/output/output.07000.pbs \
+  workdirs/%_90/output/output.07500.pbs workdirs/%_90/output/output.08000.pbs \
+  workdirs/%_90/output/output.08500.pbs workdirs/%_90/output/output.09000.pbs \
+  workdirs/%_90/output/output.09500.pbs workdirs/%_90/output/output.10000.pbs \
+  workdirs/%_90/output/output.10500.pbs workdirs/%_90/output/output.11000.pbs \
+  workdirs/%_90/output/output.11500.pbs workdirs/%_90/output/output.12000.pbs \
+  workdirs/%_90/output/output.12500.pbs workdirs/%_90/output/output.13000.pbs \
+  workdirs/%_90/output/output.13500.pbs workdirs/%_90/output/output.14000.pbs \
+  workdirs/%_90/output/output.14500.pbs workdirs/%_90/output/output.15000.pbs
 	mkdir -p $(@D)
 	python scripts/count_reads_pd.py $< workdirs/$(*F)/output workdirs/$(*F)_90/output $@
 
-workdirs/%.pbs: workdirs/%.pbs.out
-	$(eval JOBID := $(shell echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | qsub -l ${COVERAGE_RES} -N cov.${subst output.,,$(@F)} -o $@.out -e $@.err | cut -d"." -f1))
+
+workdirs/%.pbs:
+	$(eval JOBID := $(shell echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | qsub -l ${COVERAGE_RES} -N cov.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1))
 	-while [ -n "$$(qstat -a |grep $(JOBID))" ]; do sleep 60; done
-	@grep "galGal PBS job finished: SUCCESS" $@.out
+	@grep "galGal PBS job finished: SUCCESS" $@
 
 #workdirs/%_90/output/output.00500: $(subst REF,galGal4,outputs/REF/REF.fa) outputs/moleculo/%.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 #workdirs/galGal4_90/output/output.00500: outputs/galGal4/galGal4.fa outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
-workdirs/galGal4_90/output/output.% : outputs/galGal4/galGal4.fa outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
+
+workdirs/galGal4_90/output/output.%: outputs/galGal4/galGal4.fa outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
+	mkdir -p ${@D}
+	bioinfo bam_coverage $^ ${subst output.,,$(@F)} --mapq=30 --minlen=0.9 1>$@
+
+workdirs/galGal5_90/output/output.%: outputs/galGal5/galGal5.fa outputs/moleculo/galGal5.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 	mkdir -p ${@D}
 	bioinfo bam_coverage $^ ${subst output.,,$(@F)} --mapq=30 --minlen=0.9 1>$@
 
 #workdirs/galGal4/output/output.00500: inputs/galGal4/galGal4.fa.gz outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq
 workdirs/galGal4/output/output.%: outputs/galGal4/galGal4.fa outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
+	mkdir -p ${@D}
+	bioinfo bam_coverage $^ ${subst output.,,$(@F)} --mapq=30 1>$@
+
+workdirs/galGal5/output/output.%: outputs/galGal5/galGal5.fa outputs/moleculo/galGal5.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam
 	mkdir -p ${@D}
 	bioinfo bam_coverage $^ ${subst output.,,$(@F)} --mapq=30 1>$@
 
