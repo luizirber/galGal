@@ -18,10 +18,16 @@ moleculo_galGal5: outputs/moleculo/galGal5.LR6000017-DNA_A01-LRAAA-AllReads.sort
 # PBS stuff
 #######################################################################
 
-workdirs/%.pbs:
+workdirs/galGal%.pbs:
 	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
-	  qsub -l ${COVERAGE_RES} -N cov.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
+	  qsub -l ${COVERAGE_RES} -N cov.${subst output.,,$(@F)} -o $@ -e $@.err -A ged-intel11 | cut -d"." -f1` ; \
 	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 60; done
+	@grep "galGal PBS job finished: SUCCESS" $@
+
+workdirs/blat/transc_%.pbs:
+	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
+	  qsub -l ${BLAT_RES} -N blat.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
+	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 600; done
 	@grep "galGal PBS job finished: SUCCESS" $@
 
 #######################################################################
@@ -43,6 +49,10 @@ inputs/msu/Chicken.tar.gz:
 #######################################################################
 # Outputs
 #######################################################################
+
+outputs/chicken_transcripts/global_merged.fa.clean.nr: inputs/chicken_transcripts/global_merged.fa.clean.nr
+	mkdir -p $(@D)
+	cp -a $< $@
 
 outputs/uniprot/uniprot_sprot.fasta: inputs/uniprot/uniprot_sprot.fasta.gz
 	mkdir -p outputs/uniprot
@@ -92,15 +102,17 @@ outputs/galGal5/galGal5.fa: $(GALGAL5_SOURCES)
 outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq: $(MOLECULO_READS)
 	cat $^ > $@
 
-outputs/moleculo/%.fastq: inputs/moleculo/%.fastq.gz
+outputs/moleculo/%.fasta: outputs/moleculo/%.fastq_screed
 	mkdir -p outputs/moleculo
-	cp -a $< $@.gz
-	gunzip -f $@.gz
+	python -m screed.dump_to_fasta $< $@
 
 outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq_screed: $(addsuffix _screed, $(MOLECULO_READS))
 	python scripts/merge_repeated.py $@ $^
 
-outputs/moleculo/%.fastq_screed: outputs/moleculo/%.fastq
+outputs/galGal%.fa_screed: outputs/galGal%.fa
+	python -m screed.fadbm $<
+
+outputs/moleculo/%_screed: outputs/moleculo/%
 	python -m screed.fqdbm $<
 
 outputs/moleculo/%.fastq.sorted.bam: outputs/moleculo/%.fastq.bam
@@ -119,11 +131,30 @@ outputs/moleculo/galGal5.%.fastq.bam: outputs/moleculo/%.fastq outputs/galGal5/g
 	bwa mem outputs/galGal5/galGal5.fa $< > $<.sam.galGal5
 	samtools import outputs/galGal5/galGal5.fa.fai $<.sam.galGal5 $@
 
+outputs/moleculo/galGal4.%.unmapped_reads: outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-%.fastq.sorted.bam
+	scripts/extract_reads.sh $< > $@
+
+outputs/moleculo/galGal5.%.unmapped_reads: outputs/moleculo/galGal5.LR6000017-DNA_A01-LRAAA-%.fastq.sorted.bam
+	scripts/extract_reads.sh $< > $@
+
+outputs/moleculo/%.unmapped_reads: \
+  outputs/moleculo/%.1_LongRead_500_1499nt.unmapped_reads \
+  outputs/moleculo/%.1_LongRead.unmapped_reads \
+  outputs/moleculo/%.2_LongRead_500_1499nt.unmapped_reads \
+  outputs/moleculo/%.2_LongRead.unmapped_reads \
+  outputs/moleculo/%.3_LongRead_500_1499nt.unmapped_reads \
+  outputs/moleculo/%.3_LongRead.unmapped_reads \
+  outputs/moleculo/%.4_LongRead_500_1499nt.unmapped_reads \
+  outputs/moleculo/%.4_LongRead.unmapped_reads \
+  outputs/moleculo/%.5_LongRead_500_1499nt.unmapped_reads \
+  outputs/moleculo/%.5_LongRead.unmapped_reads
+	cat $^ > $@
+
 #######################################################################
 
 outputs/coverage/%.pd_df.csv: outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fastq \
-  outputs/galGal4/galGal4.fa outputs/moleculo/galGal4.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam \
-  outputs/galGal5/galGal5.fa outputs/moleculo/galGal5.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam \
+  outputs/galGal4/galGal4.fa outputs/galGal5/galGal5.fa \
+  outputs/moleculo/%.LR6000017-DNA_A01-LRAAA-AllReads.sorted.bam \
   workdirs/%/output/output.00500.pbs workdirs/%/output/output.01000.pbs \
   workdirs/%/output/output.01500.pbs workdirs/%/output/output.02000.pbs \
   workdirs/%/output/output.02500.pbs workdirs/%/output/output.03000.pbs \
@@ -177,6 +208,35 @@ workdirs/galGal5/output/output.%: outputs/galGal5/galGal5.fa outputs/moleculo/ga
 
 #######################################################################
 
+workdirs/blat/minlen200.h5: workdirs/blat/transc_reference_galGal4.pbs \
+  workdirs/blat/transc_reference_galGal5.pbs \
+  workdirs/blat/transc_moleculo_1_LongRead_500_1499nt.pbs \
+  workdirs/blat/transc_moleculo_1_LongRead.pbs \
+  workdirs/blat/transc_moleculo_2_LongRead_500_1499nt.pbs \
+  workdirs/blat/transc_moleculo_2_LongRead.pbs \
+  workdirs/blat/transc_moleculo_3_LongRead_500_1499nt.pbs \
+  workdirs/blat/transc_moleculo_3_LongRead.pbs \
+  workdirs/blat/transc_moleculo_4_LongRead_500_1499nt.pbs \
+  workdirs/blat/transc_moleculo_4_LongRead.pbs \
+  workdirs/blat/transc_moleculo_5_LongRead_500_1499nt.pbs \
+  workdirs/blat/transc_moleculo_5_LongRead.pbs
+	mkdir -p $(@D)
+	python scripts/blat_merge_outputs.py $@ $(foreach inp,$^,$(subst .pbs,,${inp}))
+
+workdirs/blat/transc_reference_galGal4: outputs/galGal4/galGal4.fa outputs/chicken_transcripts/global_merged.fa.clean.nr
+	mkdir -p $(@D)
+	blat -out=blast8 $^ $@
+
+workdirs/blat/transc_reference_galGal5: outputs/galGal5/galGal5.fa outputs/chicken_transcripts/global_merged.fa.clean.nr
+	mkdir -p $(@D)
+	blat -out=blast8 $^ $@
+
+workdirs/blat/transc_moleculo_%: outputs/moleculo/LR6000017-DNA_A01-LRAAA-%.fasta outputs/chicken_transcripts/global_merged.fa.clean.nr
+	mkdir -p $(@D)
+	blat -out=blast8 $^ $@
+
+#######################################################################
+
 outputs/uniprot/uniprot.namedb: outputs/uniprot/uniprot_sprot.fasta
 	cd outputs/uniprot && formatdb -i uniprot_sprot.fasta -o T -p T
 	cd outputs/uniprot && python ../../scripts/make-namedb.py uniprot_sprot.fasta uniprot.namedb
@@ -188,6 +248,7 @@ clean:
 	- rm outputs/moleculo/*.sam.galGal*
 	- rm outputs/moleculo/*.fastq.bam
 	# -rm outputs/galGal4/*.{amb,pac,ann}
+	find . -iname "*.pyc" -delete
 
 dependencies.png:
 	make -Bnd | make2graph > output.dot
