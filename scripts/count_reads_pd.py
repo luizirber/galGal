@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 
+from glob import glob
 import os
 import sys
 
@@ -20,7 +21,10 @@ data = {}
 total_ref_bases_covered = {}
 total_ref_bases_covered_90 = {}
 
-for i in range(500, 15001, 500):
+thresholds = []
+for output in sorted(glob(os.path.join(sys.argv[3], 'output.?????'))):
+    i = int(os.path.basename(output).split('.')[-1])
+    thresholds.append(i)
     data[i] = {}
     reads_over_threshold = query_lengths[query_lengths >= i]
 
@@ -41,7 +45,8 @@ for i in range(500, 15001, 500):
 
 
 df = pd.DataFrame.from_dict(data=data, orient='index')
-hist = np.histogram(query_lengths, range(500, 15501, 500))
+thresholds.append(thresholds[-1] + (thresholds[-1] - thresholds[-2]))
+hist = np.histogram(query_lengths, thresholds)
 df['histogram'] = pd.Series(hist[0], hist[1][:-1])
 df['total ref bases covered'] = pd.Series(total_ref_bases_covered, index=total_ref_bases_covered.keys())
 df['total ref bases covered, alignment length > 90% read'] = pd.Series(total_ref_bases_covered_90, index=total_ref_bases_covered_90.keys())

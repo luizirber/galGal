@@ -2,6 +2,8 @@ SHELL=/bin/bash
 
 COVERAGE_RES=walltime=02:00:00,nodes=1:ppn=1,mem=10gb
 
+COVERAGE_MSU_RES=walltime=00:10:00,nodes=1:ppn=1,mem=10gb
+
 BLAT_RES=walltime=60:00:00,nodes=1:ppn=1,mem=3gb
 
 GALGAL5_SOURCES=inputs/galGal5/Chicken_Chr1_PBJelly_14.1.15_QUIVER.fasta \
