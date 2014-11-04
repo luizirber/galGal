@@ -1,4 +1,4 @@
-include Makefile.inc
+
 
 .PHONY: clean all
 
@@ -57,8 +57,8 @@ inputs/reference/galGal3.2bit:
 inputs/uniprot/uniprot_sprot.fasta.gz:
 	wget -SNc ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/$(@F) -P inputs/uniprot/
 
-inputs/msu/Chicken.tar.gz:
-	wget -SNc https://dl.dropboxusercontent.com/u/1455804/Chicken.tar.gz -P inputs/msu/
+#inputs/msu/Chicken.tar.gz:
+#	wget -SNc https://dl.dropboxusercontent.com/u/1455804/Chicken.tar.gz -P inputs/msu/
 
 #######################################################################
 # Outputs
@@ -321,6 +321,20 @@ workdirs/blat/transc_moleculo_%: outputs/moleculo/LR6000017-DNA_A01-LRAAA-%.fast
 workdirs/blat/transc_msu: outputs/msu/msu.fasta outputs/chicken_transcripts/global_merged.fa.clean.nr
 	mkdir -p $(@D)
 	blat -out=blast8 $^ $@
+
+outputs/rna/msu/galGal4/%.fa.gz: outputs/rna/msu/galGal4/%.fa
+	gzip -c $< > $@
+
+outputs/rna/moleculo/galGal4/%.fa.gz: outputs/rna/moleculo/galGal4/%.fa
+	gzip -c $< > $@
+
+publish_mrnaseq_msu: $(addprefix outputs/rna/msu/galGal4/,only_rna.fa.gz only_rna_msu.fa.gz only_rna_ref.fa.gz intersection.fa.gz)
+	ssh athyra "mkdir -p public_html/mrnaseq/msu/galGal4"
+	scp $^ athyra:public_html/mrnaseq/msu/galGal4
+
+publish_mrnaseq_moleculo: $(addprefix outputs/rna/moleculo/galGal4/,only_rna.fa.gz only_rna_mol.fa.gz only_rna_ref.fa.gz intersection.fa.gz)
+	ssh athyra "mkdir -p public_html/mrnaseq/moleculo/galGal4"
+	scp $^ athyra:public_html/mrnaseq/moleculo/galGal4
 
 #######################################################################
 
