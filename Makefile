@@ -1,4 +1,4 @@
-
+include Makefile.inc
 
 .PHONY: clean all
 
@@ -39,6 +39,13 @@ workdirs/msu%.pbs:
 workdirs/blat/transc_%.pbs:
 	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
 	  qsub -l ${BLAT_RES} -N blat.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
+	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 600; done
+	@grep "galGal PBS job finished: SUCCESS" $@
+
+outputs/pacbio_assembly/chicken_2.fasta.pbs:
+	mkdir -p $(@D)
+	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
+	  qsub -l ${PBCR_RES} -N pbcr.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
 	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 600; done
 	@grep "galGal PBS job finished: SUCCESS" $@
 
@@ -345,6 +352,22 @@ outputs/uniprot/uniprot.namedb: outputs/uniprot/uniprot_sprot.fasta
 
 #######################################################################
 
+outputs/pacbio_assembly/PBcR_Specfile_mer_14.txt: inputs/pacbio_assembly/PBcR_Specfile_mer_14.txt
+	mkdir -p $(@D)
+	cp -a $< $@
+
+outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq: inputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq
+	mkdir -p $(@D)
+	cp -a $< $@
+
+outputs/pacbio_assembly/chicken_2.fasta: outputs/pacbio_assembly/PBcR_Specfile_mer_14.txt \
+                                         outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq
+	source hpcc.modules ; \
+    cd $(@D) ; \
+	PBcR -l chicken_2 -s PBcR_Specfile_mer_14.txt -fastq Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq -maxCoverage 0 genomeSize=1046932099
+
+#######################################################################
+
 clean:
 	- rm outputs/moleculo/*.sam.galGal*
 	- rm outputs/moleculo/*.fastq.bam
@@ -352,9 +375,13 @@ clean:
 	find . -iname "*.pyc" -delete
 
 dependencies.png:
+	make -Bnd | make2graph --gexf > output.gexf
 	make -Bnd | make2graph > output.dot
 	dot -Tpng output.dot > dependencies.png
-	-rm output.dot
+	#-rm output.dot
+
+#.PRECIOUS: %.sorted.bam
+.SECONDARY:
 
 #.PRECIOUS: %.sorted.bam
 .SECONDARY:
