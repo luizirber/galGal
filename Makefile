@@ -49,6 +49,13 @@ outputs/pacbio_assembly/chicken_2.fasta.pbs:
 	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 600; done
 	@grep "galGal PBS job finished: SUCCESS" $@
 
+outputs/pacbio/galGal4.sam.pbs:
+	mkdir -p $(@D)
+	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
+	  qsub -l ${BLASR_RES} -N blasr.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
+	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 600; done
+	@grep "galGal PBS job finished: SUCCESS" $@
+
 #######################################################################
 # Inputs
 #######################################################################
@@ -352,6 +359,13 @@ outputs/uniprot/uniprot.namedb: outputs/uniprot/uniprot_sprot.fasta
 
 #######################################################################
 
+outputs/pacbio/galGal4.sam: outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq outputs/reference/galGal4.fa.sab
+	mkdir -p $(@D)
+	blasr outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq outputs/reference/galGal4.fa -sa outputs/reference/galGal4.fa.sab -sam -nproc 16 -out outputs/pacbio/galGal4.sam
+
+outputs/reference/galGal4.fa.sab: outputs/reference/galGal4.fa
+	sawriter $@ $<
+
 outputs/pacbio_assembly/PBcR_Specfile_mer_14.txt: inputs/pacbio_assembly/PBcR_Specfile_mer_14.txt
 	mkdir -p $(@D)
 	cp -a $< $@
@@ -364,7 +378,7 @@ outputs/pacbio_assembly/chicken_2.fasta: outputs/pacbio_assembly/PBcR_Specfile_m
                                          outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq
 	source hpcc.modules ; \
     cd $(@D) ; \
-	PBcR -l chicken_2 -s PBcR_Specfile_mer_14.txt -fastq Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq -maxCoverage 0 genomeSize=1046932099
+	PBcR -l chicken_2 -s PBcR_Specfile_mer_14.txt -fastq Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq -maxCoverage 0 genomeSize=1046932099 > >(tee $(@F).stdout.log) 2> >(tee $(@F).stderr.log >&2)
 
 #######################################################################
 

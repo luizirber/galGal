@@ -6,7 +6,9 @@ COVERAGE_MSU_RES=walltime=00:10:00,nodes=1:ppn=1,mem=10gb
 
 BLAT_RES=walltime=60:00:00,nodes=1:ppn=1,mem=3gb
 
-PBCR_RES=walltime=10:00:00,nodes=1:ppn=8,mem=100gb -A ged-intel11
+PBCR_RES=walltime=150:00:00,nodes=1:ppn=32,mem=50gb -A ged
+
+BLASR_RES=walltime=100:00:00,nodes=1:ppn=16,mem=50gb -A ged
 
 GALGAL5_SOURCES=inputs/galGal5/Chicken_Chr1_PBJelly_14.1.15_QUIVER.fasta \
   inputs/galGal5/Chicken_Chr2_PBJelly_14.1.15_QUIVER.fasta \
