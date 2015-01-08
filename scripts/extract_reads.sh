@@ -1,8 +1,3 @@
 # !/bin/bash -eu
 
-while read unmapped
-do
-  NAME=$(echo "${unmapped}" | cut -f1)
-  SEQUENCE=$(echo "${unmapped}" | cut -f10)
-  echo -e ">${NAME}\n${SEQUENCE}"
-done <<< "$(samtools view -f4 $1)"
+samtools view -f4 $1 | cut -f1,10 | xargs -n 2 -l bash -c 'printf ">$0\n$1\n"'
