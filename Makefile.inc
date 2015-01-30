@@ -5,10 +5,12 @@ COVERAGE_RES=walltime=02:00:00,nodes=1:ppn=1,mem=10gb
 COVERAGE_MSU_RES=walltime=00:10:00,nodes=1:ppn=1,mem=10gb
 
 BLAT_RES=walltime=60:00:00,nodes=1:ppn=1,mem=3gb
+BLAT_PACBIO_RES=walltime=120:00:00,nodes=1:ppn=1,mem=3gb
 
-PBCR_RES=walltime=150:00:00,nodes=1:ppn=32,mem=50gb -A ged
+PBCR_RES=walltime=20:00:00,nodes=1:ppn=8,mem=200gb -A ged
+PBCR_RES_2=walltime=3:30:00,nodes=1:ppn=16,mem=50gb -A ged
 
-BLASR_RES=walltime=100:00:00,nodes=1:ppn=16,mem=50gb -A ged
+BLASR_RES=walltime=30:00:00,nodes=1:ppn=16,mem=30gb -A ged
 
 GALGAL5_SOURCES=inputs/galGal5/Chicken_Chr1_PBJelly_14.1.15_QUIVER.fasta \
   inputs/galGal5/Chicken_Chr2_PBJelly_14.1.15_QUIVER.fasta \
