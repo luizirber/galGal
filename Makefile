@@ -36,6 +36,12 @@ workdirs/msu%.pbs:
 	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 60; done
 	@grep "galGal PBS job finished: SUCCESS" $@
 
+workdirs/blat/transc_pacbio.pbs:
+	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
+	  qsub -l ${BLAT_PACBIO_RES} -N blat.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
+	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 600; done
+	@grep "galGal PBS job finished: SUCCESS" $@
+
 workdirs/blat/transc_%.pbs:
 	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
 	  qsub -l ${BLAT_RES} -N blat.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
@@ -43,6 +49,13 @@ workdirs/blat/transc_%.pbs:
 	@grep "galGal PBS job finished: SUCCESS" $@
 
 outputs/pacbio_assembly/chicken_2.fasta.pbs:
+	mkdir -p $(@D)
+	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
+	  qsub -l ${PBCR_RES} -N pbcr.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
+	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 600; done
+	@grep "galGal PBS job finished: SUCCESS" $@
+
+outputs/pacbio_unmapped/chicken_unmapped.fasta.pbs:
 	mkdir -p $(@D)
 	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
 	  qsub -l ${PBCR_RES} -N pbcr.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
@@ -81,6 +94,9 @@ inputs/uniprot/uniprot_sprot.fasta.gz:
 outputs/chicken_transcripts/global_merged.fa.clean.nr: inputs/chicken_transcripts/global_merged.fa.clean.nr
 	mkdir -p $(@D)
 	cp -a $< $@
+
+outputs/chicken_transcripts/global_merged.fa.clean.nr_screed: outputs/chicken_transcripts/global_merged.fa.clean.nr
+	python -m screed.fadbm $<
 
 outputs/uniprot/uniprot_sprot.fasta: inputs/uniprot/uniprot_sprot.fasta.gz
 	mkdir -p outputs/uniprot
@@ -299,6 +315,11 @@ workdirs/galGal5/output/output.%: outputs/reference/galGal5.fa outputs/moleculo/
 
 #######################################################################
 
+workdirs/blat/pacbio_minlen200.h5: workdirs/blat/transc_reference_galGal4.pbs \
+  workdirs/blat/transc_reference_galGal5.pbs
+	mkdir -p $(@D)
+	python scripts/blat_merge_outputs.py $@ $(foreach inp,$^,$(subst .pbs,,${inp}))
+
 workdirs/blat/msu_minlen200.h5: workdirs/blat/transc_reference_galGal4.pbs \
   workdirs/blat/transc_reference_galGal5.pbs \
   workdirs/blat/transc_msu.pbs
@@ -336,6 +357,12 @@ workdirs/blat/transc_msu: outputs/msu/msu.fasta outputs/chicken_transcripts/glob
 	mkdir -p $(@D)
 	blat -out=blast8 $^ $@
 
+#workdirs/blat/transc_pacbio: outputs/pacbio/Chicken_10Kb20Kb_40X_Filtered_Subreads.fasta outputs/chicken_transcripts/global_merged.fa.clean.nr
+#	mkdir -p $(@D)
+#	cat $< | parallel --round-robin --pipe --recstart ">" "blat -out=blast8 -noHead $(word 2,$^) stdin >(cat) >&2" > $@
+
+#######################################################################
+
 outputs/rna/msu/galGal4/%.fa.gz: outputs/rna/msu/galGal4/%.fa
 	gzip -c $< > $@
 
@@ -359,9 +386,35 @@ outputs/uniprot/uniprot.namedb: outputs/uniprot/uniprot_sprot.fasta
 
 #######################################################################
 
-outputs/pacbio/galGal4.sam: outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq outputs/reference/galGal4.fa.sab
+#outputs/pacbio/%.pacbio.bam: outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq outputs/reference/galGal4.fa.sab
+#	mkdir -p $(@D)
+#	blasr $< outputs/reference/$(*F).fa -sa outputs/reference/$(*F).fa.sab -sam -nproc 16 -out $<.sam.$(*F)
+#	samtools import outputs/reference/$(*F).fa.fai $<.sam.$(*F) $@
+
+outputs/pacbio/%.pacbio.bam: outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq outputs/reference/%.fa.sa outputs/reference/%.fa.fai
 	mkdir -p $(@D)
-	blasr outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq outputs/reference/galGal4.fa -sa outputs/reference/galGal4.fa.sab -sam -nproc 16 -out outputs/pacbio/galGal4.sam
+	bwa mem -x pacbio outputs/reference/$(*F).fa $< > $<.sam.$(*F)
+	samtools import outputs/reference/$(*F).fa.fai $<.sam.$(*F) $@
+
+outputs/pacbio/%.pacbio.sorted.bam: outputs/pacbio/%.pacbio.bam
+	samtools sort $< $(basename $@ .bam)
+	samtools index $@
+
+outputs/pacbio/%.unmapped_reads: outputs/pacbio/%.pacbio.sorted.bam
+	scripts/extract_reads.sh $< > $@
+
+outputs/pacbio/%.unmapped_reads: outputs/pacbio/%.pacbio.sorted.bam
+	scripts/extract_reads.py -o $@ $<
+
+outputs/msu/%.unmapped_reads: outputs/msu/%.msu.sorted.bam
+	scripts/extract_reads.sh $< > $@
+
+outputs/pacbio_assembly/%_screed: outputs/pacbio_assembly/%
+	python -m screed.fqdbm $<
+
+outputs/pacbio/%.fasta: outputs/pacbio_assembly/%.fastq_screed
+	mkdir -p outputs/pacbio
+	python -m screed.dump_to_fasta $< $@
 
 outputs/reference/galGal4.fa.sab: outputs/reference/galGal4.fa
 	sawriter $@ $<
@@ -370,7 +423,15 @@ outputs/pacbio_assembly/PBcR_Specfile_mer_14.txt: inputs/pacbio_assembly/PBcR_Sp
 	mkdir -p $(@D)
 	cp -a $< $@
 
+outputs/pacbio_unmapped/PBcR_Specfile_mer_14.txt: inputs/pacbio_assembly/PBcR_Specfile_mer_14.txt
+	mkdir -p $(@D)
+	cp -a $< $@
+
 outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq: inputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq
+	mkdir -p $(@D)
+	cp -a $< $@
+
+outputs/pacbio_unmapped/galGal4.unmapped_reads: outputs/pacbio/galGal4.unmapped_reads
 	mkdir -p $(@D)
 	cp -a $< $@
 
@@ -379,6 +440,12 @@ outputs/pacbio_assembly/chicken_2.fasta: outputs/pacbio_assembly/PBcR_Specfile_m
 	source hpcc.modules ; \
     cd $(@D) ; \
 	PBcR -l chicken_2 -s PBcR_Specfile_mer_14.txt -fastq Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq -maxCoverage 0 genomeSize=1046932099 > >(tee $(@F).stdout.log) 2> >(tee $(@F).stderr.log >&2)
+
+outputs/pacbio_unmapped/chicken_unmapped.fasta: outputs/pacbio_unmapped/PBcR_Specfile_mer_14.txt \
+                                                outputs/pacbio_unmapped/galGal4.unmapped_reads
+	source hpcc.modules ; \
+    cd $(@D) ; \
+	PBcR -l chicken_unmapped -s PBcR_Specfile_mer_14.txt -fastq galGal4.unmapped_reads -maxCoverage 0 genomeSize=52346605 > >(tee $(@F).stdout.log) 2> >(tee $(@F).stderr.log >&2)
 
 #######################################################################
 
@@ -389,10 +456,8 @@ clean:
 	find . -iname "*.pyc" -delete
 
 dependencies.png:
-	make -Bnd | make2graph --gexf > output.gexf
-	make -Bnd | make2graph > output.dot
-	dot -Tpng output.dot > dependencies.png
-	#-rm output.dot
+	#make -Bnd | make2graph --gexf > output.gexf
+	make -Bnd | make2graph | circo -Tpng -o dependencies.png
 
 #.PRECIOUS: %.sorted.bam
 .SECONDARY:
