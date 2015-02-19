@@ -20,6 +20,8 @@ msu_galGal4: outputs/msu/galGal4.msu.sorted.bam
 
 msu_galGal5: outputs/msu/galGal5.msu.sorted.bam
 
+pacbio_galGal4: outputs/pacbio/galGal4.pacbio.sorted.bam
+
 #######################################################################
 # PBS stuff
 #######################################################################
@@ -316,7 +318,7 @@ workdirs/galGal5/output/output.%: outputs/reference/galGal5.fa outputs/moleculo/
 #######################################################################
 
 workdirs/blat/pacbio_minlen200.h5: workdirs/blat/transc_reference_galGal4.pbs \
-  workdirs/blat/transc_reference_galGal5.pbs
+	workdirs/blat/transc_pacbio.pbs
 	mkdir -p $(@D)
 	python scripts/blat_merge_outputs.py $@ $(foreach inp,$^,$(subst .pbs,,${inp}))
 
@@ -357,9 +359,10 @@ workdirs/blat/transc_msu: outputs/msu/msu.fasta outputs/chicken_transcripts/glob
 	mkdir -p $(@D)
 	blat -out=blast8 $^ $@
 
-#workdirs/blat/transc_pacbio: outputs/pacbio/Chicken_10Kb20Kb_40X_Filtered_Subreads.fasta outputs/chicken_transcripts/global_merged.fa.clean.nr
-#	mkdir -p $(@D)
-#	cat $< | parallel --round-robin --pipe --recstart ">" "blat -out=blast8 -noHead $(word 2,$^) stdin >(cat) >&2" > $@
+#workdirs/blat/transc_pacbio: outputs/pacbio_unmapped/chicken_unmapped.fasta outputs/chicken_transcripts/global_merged.fa.clean.nr
+workdirs/blat/transc_pacbio: outputs/pacbio_assembly/chicken_2.fasta outputs/chicken_transcripts/global_merged.fa.clean.nr
+	mkdir -p $(@D)
+	cat $< | parallel -j 8 --round-robin --pipe --recstart ">" "blat -out=blast8 -noHead $(word 2,$^) stdin >(cat) >&2" > $@
 
 #######################################################################
 
@@ -391,6 +394,9 @@ outputs/uniprot/uniprot.namedb: outputs/uniprot/uniprot_sprot.fasta
 #	blasr $< outputs/reference/$(*F).fa -sa outputs/reference/$(*F).fa.sab -sam -nproc 16 -out $<.sam.$(*F)
 #	samtools import outputs/reference/$(*F).fa.fai $<.sam.$(*F) $@
 
+#outputs/reference/galGal4.fa.sab: outputs/reference/galGal4.fa
+#	sawriter $@ $<
+
 outputs/pacbio/%.pacbio.bam: outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq outputs/reference/%.fa.sa outputs/reference/%.fa.fai
 	mkdir -p $(@D)
 	bwa mem -x pacbio outputs/reference/$(*F).fa $< > $<.sam.$(*F)
@@ -406,8 +412,7 @@ outputs/pacbio/%.unmapped_reads: outputs/pacbio/%.pacbio.sorted.bam
 outputs/pacbio/%.unmapped_reads: outputs/pacbio/%.pacbio.sorted.bam
 	scripts/extract_reads.py -o $@ $<
 
-outputs/msu/%.unmapped_reads: outputs/msu/%.msu.sorted.bam
-	scripts/extract_reads.sh $< > $@
+#######################################################################
 
 outputs/pacbio_assembly/%_screed: outputs/pacbio_assembly/%
 	python -m screed.fqdbm $<
@@ -416,22 +421,13 @@ outputs/pacbio/%.fasta: outputs/pacbio_assembly/%.fastq_screed
 	mkdir -p outputs/pacbio
 	python -m screed.dump_to_fasta $< $@
 
-outputs/reference/galGal4.fa.sab: outputs/reference/galGal4.fa
-	sawriter $@ $<
+#######################################################################
 
 outputs/pacbio_assembly/PBcR_Specfile_mer_14.txt: inputs/pacbio_assembly/PBcR_Specfile_mer_14.txt
 	mkdir -p $(@D)
 	cp -a $< $@
 
-outputs/pacbio_unmapped/PBcR_Specfile_mer_14.txt: inputs/pacbio_assembly/PBcR_Specfile_mer_14.txt
-	mkdir -p $(@D)
-	cp -a $< $@
-
 outputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq: inputs/pacbio_assembly/Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq
-	mkdir -p $(@D)
-	cp -a $< $@
-
-outputs/pacbio_unmapped/galGal4.unmapped_reads: outputs/pacbio/galGal4.unmapped_reads
 	mkdir -p $(@D)
 	cp -a $< $@
 
@@ -440,6 +436,16 @@ outputs/pacbio_assembly/chicken_2.fasta: outputs/pacbio_assembly/PBcR_Specfile_m
 	source hpcc.modules ; \
     cd $(@D) ; \
 	PBcR -l chicken_2 -s PBcR_Specfile_mer_14.txt -fastq Chicken_10Kb20Kb_40X_Filtered_Subreads.fastq -maxCoverage 0 genomeSize=1046932099 > >(tee $(@F).stdout.log) 2> >(tee $(@F).stderr.log >&2)
+
+#######################################################################
+
+outputs/pacbio_unmapped/PBcR_Specfile_mer_14.txt: inputs/pacbio_assembly/PBcR_Specfile_mer_14.txt
+	mkdir -p $(@D)
+	cp -a $< $@
+
+outputs/pacbio_unmapped/galGal4.unmapped_reads: outputs/pacbio/galGal4.unmapped_reads
+	mkdir -p $(@D)
+	cp -a $< $@
 
 outputs/pacbio_unmapped/chicken_unmapped.fasta: outputs/pacbio_unmapped/PBcR_Specfile_mer_14.txt \
                                                 outputs/pacbio_unmapped/galGal4.unmapped_reads

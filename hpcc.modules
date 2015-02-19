@@ -11,7 +11,10 @@ module load AMOS/3.1.0a
 module load Bioperl/1.6.923
 module load wgs-assembler
 
-module load anaconda
 module load parallel
 
 module load bwa/0.7.12
+
+module load anaconda
+module unload Python/2.7.2
+source activate galGal

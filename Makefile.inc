@@ -5,9 +5,10 @@ COVERAGE_RES=walltime=02:00:00,nodes=1:ppn=1,mem=10gb
 COVERAGE_MSU_RES=walltime=00:10:00,nodes=1:ppn=1,mem=10gb
 
 BLAT_RES=walltime=60:00:00,nodes=1:ppn=1,mem=3gb
-BLAT_PACBIO_RES=walltime=120:00:00,nodes=1:ppn=1,mem=3gb
+BLAT_PACBIO_RES=walltime=60:00:00,nodes=1:ppn=8,mem=20gb
 
-PBCR_RES=walltime=20:00:00,nodes=1:ppn=8,mem=200gb -A ged
+#PBCR_RES=walltime=20:00:00,nodes=1:ppn=8,mem=200gb -A ged
+PBCR_RES=walltime=10:00:00,nodes=1:ppn=8,mem=100gb -A ged
 PBCR_RES_2=walltime=3:30:00,nodes=1:ppn=16,mem=50gb -A ged
 
 BLASR_RES=walltime=30:00:00,nodes=1:ppn=16,mem=30gb -A ged
