@@ -1,0 +1,7 @@
+#!/bin/bash -login
+#PBS -W umask=027
+
+cd $PBS_O_WORKDIR
+
+source ../../hpcc.modules
+set -exu

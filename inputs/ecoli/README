@@ -1,0 +1,15 @@
+# for ecoli
+PBcR --l K12 -s pacbio.spec --pbCNS --fastq ecoli_filtered.fastq genomeSize=4650000
+
+# yeast
+PBcR --l W303 -s pacbio.spec --pbCNS --fastq yeast_filtered.fastq genomeSize=12000000
+
+#A. thaliana
+PBcR –l athal -s pacbio.spec –pbCNS –fastq athal_filtered.fastq genomeSize=130000000 "localStaging=/scratch"
+
+#D. melanogaster
+PBcR –l dmel -s pacbio.spec –pbCNS –fastq dmel_filtered.fastq genomeSize=130000000 "localStaging=/scratch"
+
+# human
+PBcR –l human -s pacbio.human.spec –fastq human_filtered.fastq genomeSize=3000000000 sgeName=human “sge=-A human"
+ "localStaging=/scratch"
