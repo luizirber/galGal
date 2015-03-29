@@ -20,6 +20,8 @@ msu_galGal4: outputs/msu/galGal4.msu.sorted.bam
 
 msu_galGal5: outputs/msu/galGal5.msu.sorted.bam
 
+msu_latest_galGal4: outputs/msu/galGal4.latest.sorted.bam
+
 pacbio_galGal4: outputs/pacbio/galGal4.pacbio.sorted.bam
 
 #######################################################################
@@ -71,6 +73,27 @@ outputs/pacbio/galGal4.sam.pbs:
 	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 600; done
 	@grep "galGal PBS job finished: SUCCESS" $@
 
+workdir/results/Moleculo_RNA_BLAST.txt.pbs:
+	mkdir -p $(@D)
+	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
+	  qsub -l ${BLAST_MOL_RES} -N blast.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
+	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 600; done
+	@grep "galGal PBS job finished: SUCCESS" $@
+
+workdir/results/Chick_RNA_BLAST.txt.pbs:
+	mkdir -p $(@D)
+	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
+	  qsub -l ${BLAST_REF_RES} -N blast.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
+	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 600; done
+	@grep "galGal PBS job finished: SUCCESS" $@
+
+workdir/results/%.pbs:
+	mkdir -p $(@D)
+	JOBID=`echo make $(subst .pbs,,$@) | cat pbs/header.sub - pbs/footer.sub | \
+	  qsub -l ${BLAST_RES} -N blast.${subst output.,,$(@F)} -o $@ -e $@.err | cut -d"." -f1` ; \
+	while [ -n "$$(qstat -a |grep $${JOBID})" ]; do sleep 600; done
+	@grep "galGal PBS job finished: SUCCESS" $@
+
 #######################################################################
 # Inputs
 #######################################################################
@@ -89,8 +112,29 @@ inputs/uniprot/uniprot_sprot.fasta.gz:
 #inputs/msu/Chicken.tar.gz:
 #	wget -SNc https://dl.dropboxusercontent.com/u/1455804/Chicken.tar.gz -P inputs/msu/
 
+#inputs/msu/chicken_contig_list.all.txt.gz:
+#	wget -SNc https://dl.dropboxusercontent.com/u/1455804/chicken_contig_list.all.txt.gz -P inputs/msu/
+
 #######################################################################
 # Outputs
+#######################################################################
+
+outputs/uniprot/uniprot_sprot.fasta: inputs/uniprot/uniprot_sprot.fasta.gz
+	mkdir -p outputs/uniprot
+	cp -a {inputs,outputs}/uniprot/$(<F)
+	gunzip -f outputs/uniprot/$(<F)
+
+outputs/uniprot/%.nsq: outputs/uniprot/%
+	cd $(@D) && \
+	formatdb -i $(<F) -o T -p T
+
+outputs/uniprot/%.namedb: outputs/uniprot/%.fasta
+	cd $(@D) && \
+	python $(PRJ_ROOT)/scripts/make-namedb.py $(<F) $(@F)
+
+outputs/uniprot/%_screed: outputs/uniprot/%
+	python -m screed.fadbm $<
+
 #######################################################################
 
 outputs/chicken_transcripts/global_merged.fa.clean.nr: inputs/chicken_transcripts/global_merged.fa.clean.nr
@@ -100,10 +144,103 @@ outputs/chicken_transcripts/global_merged.fa.clean.nr: inputs/chicken_transcript
 outputs/chicken_transcripts/global_merged.fa.clean.nr_screed: outputs/chicken_transcripts/global_merged.fa.clean.nr
 	python -m screed.fadbm $<
 
-outputs/uniprot/uniprot_sprot.fasta: inputs/uniprot/uniprot_sprot.fasta.gz
-	mkdir -p outputs/uniprot
-	cp -a {inputs,outputs}/uniprot/$(<F)
-	gunzip -f outputs/uniprot/$(<F)
+outputs/chicken_transcripts/%.part: outputs/chicken_transcripts/%
+	cd $(@D) && \
+	do-partition.py -x 1e10 -N 4 --threads 4 chick_rna $(<F)
+
+outputs/chicken_transcripts/%.renamed.fasta.gz: outputs/chicken_transcripts/%.part
+	cd $(@D) && \
+	python $(PRJ_ROOT)/scripts/rename-with-partitions.py chick_rna $*
+
+outputs/chicken_transcripts/%.renamed.fasta: outputs/chicken_transcripts/%.renamed.fasta.gz
+	cd $(@D) && \
+    gunzip -f $(<F)
+
+outputs/chicken_transcripts/%.nsq: outputs/chicken_transcripts/%
+	cd $(@D) && \
+	formatdb -i $(<F) -o T -p F
+
+#######################################################################
+
+outputs/rna/pacbio/galGal4/summary.csv: outputs/reference/galGal4.fa_screed outputs/pacbio/galGal4.unmapped_reads workdirs/blat/pacbio_minlen200.h5 outputs/chicken_transcripts/global_merged.fa.clean.nr_screed
+	mkdir -p $(@D)
+	python scripts/venn.py galGal4 outputs/reference/galGal4.fa_screed /reference_galGal4 outputs/chicken_transcripts/global_merged.fa.clean.nr_screed pacbio workdirs/blat/pacbio_minlen200.h5 outputs/pacbio/galGal4.unmapped_reads
+
+outputs/rna/moleculo/%/summary.csv: outputs/reference/%.fa_screed outputs/moleculo/%.unmapped_reads workdirs/blat/minlen200.h5 outputs/chicken_transcripts/global_merged.fa.clean.nr_screed
+	mkdir -p $(@D)
+	python scripts/venn.py $* outputs/reference/$*.fa_screed /reference_$* outputs/chicken_transcripts/global_merged.fa.clean.nr_screed moleculo workdirs/blat/minlen200.h5 outputs/moleculo/$*.unmapped_reads
+
+outputs/rna/%/only_rna.fa: outputs/rna/%/summary.csv
+outputs/rna/%/only_rna_ref.fa: outputs/rna/%/summary.csv
+outputs/rna/%/only_rna_seq.fa: outputs/rna/%/summary.csv
+outputs/rna/%/intersection.fa: outputs/rna/%/summary.csv
+
+#######################################################################
+
+outputs/rna/%.part: outputs/rna/%
+	cd $(@D) && \
+	do-partition.py -x 1e10 -N 4 --threads 4 chick_rna $(<F)
+
+outputs/rna/%.renamed.fasta.gz: outputs/rna/%.part
+	cd $(@D) && \
+	python $(PRJ_ROOT)/scripts/rename-with-partitions.py chick_rna $*
+
+outputs/rna/%.renamed.fasta: outputs/rna/%.renamed.fasta.gz
+	cd $(@D) && \
+    gunzip -f $(<F)
+
+outputs/rna/%.nsq: outputs/rna/%
+	cd $(@D) && \
+	formatdb -i $(<F) -o T -p F
+
+#######################################################################
+
+workdir/results/chick.x.uniprot: outputs/rna/only_rna.fa.renamed.fasta outputs/uniprot/uniprot_sprot.fasta
+	mkdir -p $(@D)
+	blastall -i $(word 1,$^) -d $(word 2,$^) -e 1e-3 -p blastx -o $@ -a 8 -v 4 -b 4
+
+workdir/results/uniprot.x.chick: outputs/uniprot/uniprot_sprot.fasta outputs/rna/only_rna.fa.renamed.fasta
+	mkdir -p $(@D)
+	blastall -i $(word 1,$^) -d $(word 2,$^) -e 1e-3 -p tblastn -o $@ -a 8 -v 4 -b 4
+
+outputs/rna/%.homol: outputs/rna/%
+	cd $(@D) && \
+	python $(PRJ_ROOT)/scripts/make-uni-best-hits.py $(<F) $(@F)
+
+outputs/rna/chick.x.uniprot.ortho: outputs/rna/chick.x.uniprot outputs/rna/uniprot.x.chick
+	cd $(@D) && \
+	python $(PRJ_ROOT)/scripts/make-reciprocal-best-hits.py chick.x.uniprot uniprot.x.chick $(@F)
+
+outputs/rna/%.annot: outputs/chicken_transcripts/% outputs/rna/chick.x.uniprot.ortho outputs/rna/chick.x.uniprot.homol
+	cd $(@D) && \
+	python $(PRJ_ROOT)/scripts/annotate-seqs.py $(PRJ_ROOT)/$< chick.x.uniprot.ortho chick.x.uniprot.homol
+
+outputs/rna/ortho.fa: outputs/rna/global_merged.fa.clean.nr.renamed.fasta.annot
+	python $(PRJ_ROOT)/scripts/extract.py $< $@ ortho
+
+#######################################################################
+
+outputs/reference/%.nsq: outputs/reference/%
+	makeblastdb -in $< -out $< -dbtype nucl
+
+outputs/moleculo/%.00.nsq: outputs/moleculo/%
+	makeblastdb -in $< -out $< -dbtype nucl
+
+workdir/results/Chick_RNA_BLAST.txt: outputs/chicken_transcripts/global_merged.fa.clean.nr.renamed.fasta outputs/reference/galGal4.fa.nsq
+	blastn -query $< -out $@ -db outputs/reference/galGal4.fa -outfmt 6 -evalue 1e-3 -num_threads 8
+
+workdir/results/Moleculo_RNA_BLAST.txt: outputs/chicken_transcripts/global_merged.fa.clean.nr.renamed.fasta outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fasta.00.nsq
+	blastn -query $< -out $@ -db outputs/moleculo/LR6000017-DNA_A01-LRAAA-AllReads.fasta -outfmt 6 -evalue 1e-3 -num_threads 16
+
+outputs/rna/match_ortho.rna.ref.txt: outputs/rna/ortho.fa outputs/rna/Chick_RNA_BLAST.txt
+	cd $(@D) && \
+	python $(PRJ_ROOT)/scripts/find_match_2.py ortho.fa Chick_RNA_BLAST.txt ortho.rna.ref
+
+outputs/rna/match_ortho.rna.moleculo.txt: outputs/rna/ortho.fa outputs/rna/Moleculo_RNA_BLAST.txt
+	cd $(@D) && \
+	python $(PRJ_ROOT)/scripts/find_match_2.py ortho.fa Moleculo_RNA_BLAST.txt ortho.rna.moleculo
+
+#######################################################################
 
 outputs/moleculo/%-AllReads.sorted.bam: \
   outputs/moleculo/%-1_LongRead_500_1499nt.fastq.sorted.bam \
@@ -164,6 +301,54 @@ outputs/msu/%.msu.sorted.bam: outputs/msu/%.msu.bam
 
 outputs/msu/%.unmapped_reads: outputs/msu/%.msu.sorted.bam
 	scripts/extract_reads.sh $< > $@
+
+#######################################################################
+
+outputs/msu/latest.fasta: inputs/msu/chicken_contig_list.all.txt.gz
+	mkdir -p $(@D)
+	gunzip -c $< > $@.raw
+	python scripts/msuseq_fix.py $@.raw $@
+
+outputs/msu/%.latest.bam: outputs/msu/latest.fasta outputs/reference/%.fa.sa outputs/reference/%.fa.fai
+	mkdir -p $(@D)
+	bwa mem outputs/reference/$(*F).fa $< > $<.sam.$(*F)
+	samtools import outputs/reference/$(*F).fa.fai $<.sam.$(*F) $@
+
+outputs/msu/%.latest.sorted.bam: outputs/msu/%.latest.bam
+	samtools sort $< $(basename $@ .bam)
+	samtools index $@
+
+outputs/msu/%.latest.unmapped_reads: outputs/msu/%.latest.sorted.bam
+	scripts/extract_reads.sh $< > $@
+
+#######################################################################
+
+outputs/msu/coverage/%.latest.pd_df.csv: outputs/msu/latest.fasta \
+  outputs/reference/galGal4.fa outputs/msu/%.latest.sorted.bam \
+  workdirs/msulatest/%/output/output.00500 workdirs/msulatest/%/output/output.01000 \
+  workdirs/msulatest/%/output/output.01500 workdirs/msulatest/%/output/output.02000 \
+  workdirs/msulatest/%/output/output.02500 workdirs/msulatest/%/output/output.03000 \
+  workdirs/msulatest/%/output/output.03500 workdirs/msulatest/%/output/output.03000 \
+  workdirs/msulatest/%/output/output.03500 workdirs/msulatest/%/output/output.04000 \
+  workdirs/msulatest/%/output/output.04500 workdirs/msulatest/%/output/output.05000 \
+  workdirs/msulatest/%/output/output.05500 workdirs/msulatest/%/output/output.06000 \
+  workdirs/msulatest/%_90/output/output.00500 workdirs/msulatest/%_90/output/output.01000 \
+  workdirs/msulatest/%_90/output/output.01500 workdirs/msulatest/%_90/output/output.02000 \
+  workdirs/msulatest/%_90/output/output.02500 workdirs/msulatest/%_90/output/output.03000 \
+  workdirs/msulatest/%_90/output/output.03500 workdirs/msulatest/%_90/output/output.03000 \
+  workdirs/msulatest/%_90/output/output.03500 workdirs/msulatest/%_90/output/output.04000 \
+  workdirs/msulatest/%_90/output/output.04500 workdirs/msulatest/%_90/output/output.05000 \
+  workdirs/msulatest/%_90/output/output.05500 workdirs/msulatest/%_90/output/output.06000
+	mkdir -p $(@D)
+	python scripts/count_reads_pd.py $< workdirs/msulatest/$(*F)/output workdirs/msulatest/$(*F)_90/output $@
+
+workdirs/msulatest/galGal4_90/output/output.%: outputs/reference/galGal4.fa outputs/msu/galGal4.latest.sorted.bam
+	mkdir -p ${@D}
+	bioinfo bam_coverage $^ ${subst output.,,$(@F)} --mapq=30 --minlen=0.9 1>$@
+
+workdirs/msulatest/galGal4/output/output.%: outputs/reference/galGal4.fa outputs/msu/galGal4.latest.sorted.bam
+	mkdir -p ${@D}
+	bioinfo bam_coverage $^ ${subst output.,,$(@F)} --mapq=30 1>$@
 
 #######################################################################
 
@@ -322,6 +507,11 @@ workdirs/blat/pacbio_minlen200.h5: workdirs/blat/transc_reference_galGal4.pbs \
 	mkdir -p $(@D)
 	python scripts/blat_merge_outputs.py $@ $(foreach inp,$^,$(subst .pbs,,${inp}))
 
+workdirs/blat/msu_latest_minlen200.h5: workdirs/blat/transc_reference_galGal4.pbs \
+  workdirs/blat/transc_msu_latest.pbs
+	mkdir -p $(@D)
+	python scripts/blat_merge_outputs.py $@ $(foreach inp,$^,$(subst .pbs,,${inp}))
+
 workdirs/blat/msu_minlen200.h5: workdirs/blat/transc_reference_galGal4.pbs \
   workdirs/blat/transc_reference_galGal5.pbs \
   workdirs/blat/transc_msu.pbs
@@ -355,14 +545,18 @@ workdirs/blat/transc_moleculo_%: outputs/moleculo/LR6000017-DNA_A01-LRAAA-%.fast
 	mkdir -p $(@D)
 	blat -out=blast8 $^ $@
 
+workdirs/blat/transc_msu_latest: outputs/msu/latest.fasta outputs/chicken_transcripts/global_merged.fa.clean.nr
+	mkdir -p $(@D)
+	blat -out=blast8 $^ $@
+
 workdirs/blat/transc_msu: outputs/msu/msu.fasta outputs/chicken_transcripts/global_merged.fa.clean.nr
 	mkdir -p $(@D)
 	blat -out=blast8 $^ $@
 
-#workdirs/blat/transc_pacbio: outputs/pacbio_unmapped/chicken_unmapped.fasta outputs/chicken_transcripts/global_merged.fa.clean.nr
-workdirs/blat/transc_pacbio: outputs/pacbio_assembly/chicken_2.fasta outputs/chicken_transcripts/global_merged.fa.clean.nr
+workdirs/blat/transc_pacbio: outputs/pacbio_unmapped/chicken_unmapped.unique.fasta outputs/chicken_transcripts/global_merged.fa.clean.nr
 	mkdir -p $(@D)
-	cat $< | parallel -j 8 --round-robin --pipe --recstart ">" "blat -out=blast8 -noHead $(word 2,$^) stdin >(cat) >&2" > $@
+	blat -out=blast8 $^ $@
+	#cat $< | parallel -j 8 --round-robin --pipe --recstart ">" "blat -out=blast8 -noHead $(word 2,$^) stdin >(cat) >&2" > $@
 
 #######################################################################
 
@@ -375,6 +569,10 @@ outputs/rna/moleculo/galGal4/%.fa.gz: outputs/rna/moleculo/galGal4/%.fa
 publish_mrnaseq_msu: $(addprefix outputs/rna/msu/galGal4/,only_rna.fa.gz only_rna_msu.fa.gz only_rna_ref.fa.gz intersection.fa.gz)
 	ssh athyra "mkdir -p public_html/mrnaseq/msu/galGal4"
 	scp $^ athyra:public_html/mrnaseq/msu/galGal4
+
+publish_mrnaseq_filtered: $(addprefix outputs/rna/cobb/,A-ref_rna.fa B-ref_rna_mol.fa C-mol_rna.fa D-only_rna.fa ortho.fa)
+	ssh athyra "mkdir -p public_html/ortho"
+	scp $^ athyra:public_html/ortho/
 
 publish_mrnaseq_moleculo: $(addprefix outputs/rna/moleculo/galGal4/,only_rna.fa.gz only_rna_mol.fa.gz only_rna_ref.fa.gz intersection.fa.gz)
 	ssh athyra "mkdir -p public_html/mrnaseq/moleculo/galGal4"
@@ -451,7 +649,12 @@ outputs/pacbio_unmapped/chicken_unmapped.fasta: outputs/pacbio_unmapped/PBcR_Spe
                                                 outputs/pacbio_unmapped/galGal4.unmapped_reads
 	source hpcc.modules ; \
     cd $(@D) ; \
-	PBcR -l chicken_unmapped -s PBcR_Specfile_mer_14.txt -fastq galGal4.unmapped_reads -maxCoverage 0 genomeSize=52346605 > >(tee $(@F).stdout.log) 2> >(tee $(@F).stderr.log >&2)
+	PBcR -l chicken_unmapped -s PBcR_Specfile_mer_14.txt -fastq galGal4.unmapped_reads -maxCoverage 0 genomeSize=52346605 -noclean > >(tee $(@F).stdout.log) 2> >(tee $(@F).stderr.log >&2)
+#	PBcR -l chicken_unmapped -s PBcR_Specfile_mer_14.txt -fastq galGal4.unmapped_reads -maxCoverage 0 genomeSize=52346605 -noclean -pbcns=0 falconcns=1 > >(tee $(@F).stdout.log) 2> >(tee $(@F).stderr.log >&2)
+
+outputs/pacbio_unmapped/chicken_unmapped.unique.fasta: outputs/pacbio_unmapped/chicken_unmapped.fasta
+	awk '{if ($$0 ~ /^>/) {print $$0 "/" NR} else {print $$0 }}' $< > $@
+
 
 #######################################################################
 
