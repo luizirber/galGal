@@ -51,13 +51,20 @@ def write_read(output, read, output_type):
     Write read to open FASTQ file.
     """
     info = {'name':  read.qname}
+
+    quality = read.qual
+    if quality is None:
+        # ASCII 34, e.g 75% chance of incorrect read
+        quality = '\"' * len(read.seq)
+
     if read.is_reverse:
-        info.update({'quality':  read.qual[::-1],
+        info.update({'quality':  quality[::-1],
                      'sequence': reverse_complement(read.seq)})
     else:
-        info.update({'quality':  read.qual,
+        info.update({'quality':  quality,
                      'sequence': read.seq})
-    if output_type is 'fasta':
+
+    if output_type == 'fasta':
         output.write('>{name}\n{sequence}\n'.format(**info))
     else:
         output.write('@{name}\n{sequence}\n+\n{quality}\n'.format(**info))
@@ -80,7 +87,8 @@ if __name__ == '__main__':
     group.add_argument('-o', dest='output_file', help='file to'
                        ' write reads to (default: BAM_FILE.fastq)')
     group.add_argument('--format', dest='filetype', help='output format,'
-                       ' FASTA or FASTQ (default: fastq)')
+                       ' FASTA or FASTQ (default: fastq)',
+                       type=str, default='fastq', choices=["fasta", "fastq"])
     group.add_argument('-f', dest='flag', type=int, help='Extract only reads'
                        'matching this flag (default: 4, unmapped reads)',
                        default=4)
