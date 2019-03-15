@@ -1,4 +1,4 @@
-pandas==0.24.1
+pandas==0.24.2
 screed==1.0
 numpy==1.16.2
 bioinfo==0.1.8
