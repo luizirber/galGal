@@ -3,5 +3,5 @@ screed==1.0
 numpy==1.16.4
 bioinfo==0.1.8
 biopython==1.73
-ipython[all]==7.5.0
+ipython[all]==7.6.0
 seaborn==0.9.0
