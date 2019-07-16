@@ -2,6 +2,6 @@ pandas==0.24.2
 screed==1.0
 numpy==1.16.4
 bioinfo==0.1.8
-biopython==1.73
+biopython==1.74
 ipython[all]==7.6.1
 seaborn==0.9.0
